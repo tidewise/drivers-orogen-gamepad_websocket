@@ -4,3 +4,29 @@ name "gamepad_websocket"
 
 import_types_from "gamepad_websocketTypes.hpp"
 import_types_from "base"
+import_types_from "linux_gpios"
+
+task_context "GamepadCommandAggregator" do
+    needs_configuration
+
+    property "axis_map", "/std/vector<gamepad_websocket/AxisMapping>"
+    property "button_map", "/std/vector<gamepad_websocket/ButtonMapping>"
+
+    input_port "gpio_propulsion_enable", "/linux_gpios/GPIOState"
+    input_port "gpio_manual_control_enable", "/linux_gpios/GPIOState"
+
+    input_port "joystick_1_command", "/controldev/RawCommand"
+    input_port "joystick_2_command", "/controldev/RawCommand"
+
+    output_port "aggregated_command", "/controldev/RawCommand"
+
+    port_driven
+end
+
+task_context "GamepadWebsocketTask" do
+    needs_configuration
+
+    input_port "aggregated_command", "controldev/RawCommand"
+
+    periodic 0.1
+end

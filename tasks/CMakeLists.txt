@@ -1,5 +1,7 @@
 # Generated from orogen/lib/orogen/templates/tasks/CMakeLists.txt
 
+find_package(Seasocks REQUIRED)
+
 include(gamepad_websocketTaskLib)
 ADD_LIBRARY(${GAMEPAD_WEBSOCKET_TASKLIB_NAME} SHARED
     ${GAMEPAD_WEBSOCKET_TASKLIB_SOURCES})

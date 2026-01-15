@@ -1,0 +1,8 @@
+<package>
+  <description brief="Package for transmitting gamepad commands via a websocket">
+
+  </description>
+  <author>Jhonas Moura</author>
+  <license>Proprietary</license>
+  <depend package="base/cmake" />
+</package>

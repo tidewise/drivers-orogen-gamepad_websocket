@@ -10,16 +10,12 @@ import_types_from "controldev"
 task_context "GamepadCommandAggregatorTask" do
     needs_configuration
 
-    property "axis_map", "/std/vector<gamepad_websocket/AxisMapping>"
-    property "button_map", "/std/vector<gamepad_websocket/ButtonMapping>"
+    # All gpios that make up the gamepad
+    input_port "gpios_command", "/linux_gpios/GPIOState"
+    input_port "joystick1_command", "/controldev/RawCommand"
+    input_port "joystick2_command", "/controldev/RawCommand"
 
-    input_port "gpio_estop_enabled", "/linux_gpios/GPIOState"
-    input_port "gpio_manual_control_enabled", "/linux_gpios/GPIOState"
-    input_port "gpio_cruise_control_enabled", "/linux_gpios/GPIOState"
-
-    input_port "navigation_joystick_command", "/controldev/RawCommand"
-    # input_port "maneuver_joystick_command", "/controldev/RawCommand"
-
+    # All gamepad commands aggregated as one RawCommand
     output_port "aggregated_command", "/controldev/RawCommand"
 
     port_driven

@@ -7,4 +7,5 @@
   <depend package="base/cmake" />
   <depend package="drivers/orogen/linux_gpios" />
   <depend package="drivers/orogen/controldev" />
+  <test_depend package="tools/syskit" />
 </package>

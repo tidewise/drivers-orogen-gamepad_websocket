@@ -29,21 +29,12 @@ namespace gamepad_websocket {
         friend class GamepadCommandAggregatorTaskBase;
 
     protected:
-    private:
-        std::vector<AxisMapping> m_axis_map;
-        std::vector<ButtonMapping> m_button_map;
-        std::vector<uint8_t> m_buttons;
-        std::vector<double> m_axis;
-
-        size_t computeTotalAxes();
-        controldev::RawCommand aggregateAllCommands();
+        controldev::RawCommand aggregateAllCommands(
+            controldev::RawCommand const& first_joystick,
+            controldev::RawCommand const& second_joystick,
+            linux_gpios::GPIOState const& gpios);
 
     public:
-        static constexpr int THRUSTER_COMMAND_AXIS = 0;
-        static constexpr int RUDDER_COMMAND_AXIS = 1;
-        static constexpr int BOW_COMMAND_AXIS = 2;
-        static constexpr int DIFFERENTIAL_COMMAND_AXIS = 3;
-
         /** TaskContext constructor for GamepadCommandAggregatorTask
          * \param name Name of the task. This name needs to be unique to make it
          * identifiable via nameservices. \param initial_state The initial TaskState of

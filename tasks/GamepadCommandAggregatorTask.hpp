@@ -29,6 +29,8 @@ namespace gamepad_websocket {
         friend class GamepadCommandAggregatorTaskBase;
 
     protected:
+    private:
+        std::string m_device_name;
         controldev::RawCommand aggregateAllCommands(
             controldev::RawCommand const& first_joystick,
             controldev::RawCommand const& second_joystick,

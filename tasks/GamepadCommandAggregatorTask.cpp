@@ -24,6 +24,7 @@ bool GamepadCommandAggregatorTask::configureHook()
 {
     if (!GamepadCommandAggregatorTaskBase::configureHook())
         return false;
+    m_device_name = _device_name.get();
     return true;
 }
 bool GamepadCommandAggregatorTask::startHook()
@@ -55,6 +56,7 @@ RawCommand GamepadCommandAggregatorTask::aggregateAllCommands(
         gamepad.buttonValue.begin(),
         [](const raw_io::Digital& s) { return static_cast<uint8_t>(s.data); });
 
+    gamepad.deviceIdentifier = m_device_name;
     gamepad.time = base::Time::now();
     return gamepad;
 }

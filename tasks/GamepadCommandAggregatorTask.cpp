@@ -72,9 +72,7 @@ void GamepadCommandAggregatorTask::updateHook()
         return;
     }
     RawCommand joystick2_command;
-    if (_joystick2_command.read(joystick2_command) == RTT::NoData) {
-        return;
-    }
+    _joystick2_command.read(joystick2_command);
 
     RawCommand aggregated_command =
         aggregateAllCommands(joystick1_command, joystick2_command, gpios);

@@ -39,7 +39,7 @@ RawCommand GamepadCommandAggregatorTask::aggregateAllCommands(
     GPIOState const& gpios)
 {
     RawCommand gamepad;
-    // Axes
+    // Axis
     gamepad.axisValue.reserve(
         first_joystick.axisValue.size() + second_joystick.axisValue.size());
     gamepad.axisValue.insert(gamepad.axisValue.end(),
@@ -49,7 +49,7 @@ RawCommand GamepadCommandAggregatorTask::aggregateAllCommands(
         second_joystick.axisValue.begin(),
         second_joystick.axisValue.end());
     // Buttons
-    gamepad.buttonValue.reserve(gpios.states.size());
+    gamepad.buttonValue.resize(gpios.states.size());
     std::transform(gpios.states.begin(),
         gpios.states.end(),
         gamepad.buttonValue.begin(),

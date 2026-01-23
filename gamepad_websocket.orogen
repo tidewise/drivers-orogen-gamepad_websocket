@@ -44,3 +44,15 @@ task_context "BaseWebsocketPublisherTask" do
 
     periodic 0.1
 end
+
+# Takes raw command and publishes it via a websocket
+task_context "RawCommandWebsocketPublisherTask",
+             subclasses: "BaseWebsocketPublisherTask" do
+    # How much time since the last raw_command sample before the commands are no longer
+    # published to the websocket
+    property "command_timeout", "base/Time"
+
+    input_port "raw_command", "controldev/RawCommand"
+
+    runtime_states :INPUT_TIMEOUT, :PUBLISHING
+end

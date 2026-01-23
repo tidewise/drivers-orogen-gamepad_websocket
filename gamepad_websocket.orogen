@@ -3,4 +3,22 @@
 name "gamepad_websocket"
 
 import_types_from "gamepad_websocketTypes.hpp"
-import_types_from "base"
+import_types_from "std"
+import_types_from "linux_gpios"
+using_library "controldev"
+import_types_from "controldev/RawCommand.hpp"
+
+task_context "GamepadCommandAggregatorTask" do
+    needs_configuration
+
+    property "device_name", "/std/string"
+    # All gpios that make up the gamepad
+    input_port "gpios_command", "/linux_gpios/GPIOState"
+    input_port "joystick1_command", "/controldev/RawCommand"
+    input_port "joystick2_command", "/controldev/RawCommand"
+
+    # All gamepad commands aggregated as one RawCommand
+    output_port "aggregated_command", "/controldev/RawCommand"
+
+    port_driven
+end

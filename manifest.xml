@@ -5,4 +5,7 @@
   <author>Jhonas Moura</author>
   <license>Proprietary</license>
   <depend package="base/cmake" />
+  <depend package="drivers/orogen/linux_gpios" />
+  <depend package="drivers/controldev" />
+  <test_depend package="tools/syskit" />
 </package>

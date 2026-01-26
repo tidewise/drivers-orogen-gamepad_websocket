@@ -15,7 +15,8 @@ using namespace gamepad_websocket;
 using namespace seasocks;
 using namespace std;
 
-CommandPublisher::CommandPublisher()
+CommandPublisher::CommandPublisher(shared_ptr<WebsocketHandler> handler)
+    : m_handler(handler)
 {
 }
 
@@ -41,7 +42,6 @@ bool BaseWebsocketPublisherTask::configureHook()
 {
     if (!BaseWebsocketPublisherTaskBase::configureHook())
         return false;
-    m_publisher = make_shared<CommandPublisher>();
     return true;
 }
 
@@ -68,9 +68,8 @@ bool BaseWebsocketPublisherTask::startHook()
             auto logger = make_shared<PrintfLogger>(Logger::Level::Debug);
             Server server(logger);
 
-            auto handler = make_shared<WebsocketHandler>();
-            handler->m_task = this;
-            this->m_publisher->m_handler = handler;
+            auto handler = make_shared<WebsocketHandler>(this);
+            this->m_publisher = make_shared<CommandPublisher>(handler);
             server.addWebSocketHandler(endpoint.c_str(), handler, true);
 
             if (!server.startListening(port)) {

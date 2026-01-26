@@ -8,6 +8,7 @@
 #include "gamepad_websocket/BaseWebsocketPublisherTaskBase.hpp"
 
 #include <future>
+#include <memory>
 #include <optional>
 #include <seasocks/Server.h>
 
@@ -24,7 +25,7 @@ namespace gamepad_websocket {
     public:
         std::shared_ptr<WebsocketHandler> m_handler;
 
-        CommandPublisher();
+        CommandPublisher(std::shared_ptr<WebsocketHandler> handler);
 
         void run() override;
     };

@@ -10,6 +10,16 @@
             "cwd": "${workspaceRoot}",
             "externalConsole": true,
             "stopAtEntry": false
+        },
+        {
+            "name": "orogen - gamepad_websocket::RawCommandWebsocketPublisherTask",
+            "type": "orogen",
+            "request": "launch",
+            "deploy": "gamepad_websocket::RawCommandWebsocketPublisherTask",
+            "deployAs": "websocket",
+            "cwd": "${workspaceRoot}",
+            "externalConsole": true,
+            "stopAtEntry": false
         }
     ]
 }

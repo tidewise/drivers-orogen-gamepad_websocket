@@ -1,7 +1,7 @@
 #ifndef GAMEPAD_WEBSOCKET_WEBSOCKETHANDLER_HPP
 #define GAMEPAD_WEBSOCKET_WEBSOCKETHANDLER_HPP
 
-#include "tasks/BaseWebsocketPublisherTask.hpp"
+#include "BaseWebsocketPublisherTask.hpp"
 
 #include <optional>
 #include <seasocks/WebSocket.h>
@@ -20,6 +20,8 @@ namespace gamepad_websocket {
             seasocks::WebSocket* socket) const;
 
     public:
+        WebsocketHandler(BaseWebsocketPublisherTask* task = nullptr);
+
         /**
          * @brief Publishes the outgoing RawCommand stored in the task to all
          * the active clients. Does nothing when no RawCommand is available yet.
@@ -30,7 +32,7 @@ namespace gamepad_websocket {
         void publishData();
 
         /* Pointer to the base task for information shared with *this. */
-        BaseWebsocketPublisherTask* m_task;
+        BaseWebsocketPublisherTask* m_task = nullptr;
     };
 }
 

@@ -1,4 +1,5 @@
 #include "WebsocketHandler.hpp"
+#include "BaseWebsocketPublisherTask.hpp"
 #include "Client.hpp"
 
 #include "base-logging/Logging.hpp"
@@ -14,12 +15,7 @@ using namespace gamepad_websocket;
 using namespace seasocks;
 using namespace std;
 
-// Declaration and definition in the source file instead of header to avoid dependency
-// on jsoncpp
-template <typename T>
-Json::Value parseArrayCommandToJsonArray(std::vector<T> const& cmds);
-
-template <typename T> Json::Value parseArrayCommandToJsonArray(std::vector<T> const& cmds)
+Json::Value parseAxesToJson(std::vector<double> const& cmds)
 {
     Json::Value array_msg;
     for (auto cmd : cmds) {
@@ -27,16 +23,34 @@ template <typename T> Json::Value parseArrayCommandToJsonArray(std::vector<T> co
     }
     return array_msg;
 }
-Json::Value parseRawCommand(controldev::RawCommand const& raw_cmd);
+
+Json::Value parseButtonsToJson(std::vector<uint8_t> const& button_cmds)
+{
+    Json::Value buttons;
+    for (auto btn : button_cmds) {
+        Json::Value button_json;
+        button_json["pressed"] = btn == 1;
+        buttons.append(button_json);
+    }
+    return buttons;
+}
 
 Json::Value parseRawCommand(controldev::RawCommand const& raw_cmd)
 {
     Json::Value out_msg;
     out_msg["time"] = static_cast<Json::UInt64>(raw_cmd.time.toMilliseconds());
     out_msg["id"] = raw_cmd.deviceIdentifier;
-    out_msg["axes"] = parseArrayCommandToJsonArray(raw_cmd.axisValue);
-    out_msg["buttons"] = parseArrayCommandToJsonArray(raw_cmd.buttonValue);
+    out_msg["axes"] = parseAxesToJson(raw_cmd.axisValue);
+    out_msg["buttons"] = parseButtonsToJson(raw_cmd.buttonValue);
     return out_msg;
+}
+
+WebsocketHandler::WebsocketHandler(BaseWebsocketPublisherTask* task)
+    : m_task(task)
+{
+    if (task == nullptr) {
+        throw invalid_argument("WebsocketHandler task cannot be a nullptr");
+    }
 }
 
 void WebsocketHandler::onConnect(WebSocket* socket)

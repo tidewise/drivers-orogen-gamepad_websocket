@@ -54,48 +54,20 @@ bool BaseWebsocketPublisherTask::startHook()
     uint16_t port = _port.get();
     m_server = nullptr;
 
-    mutex server_thread_ready_mutex;
-    condition_variable server_thread_ready_signal;
+    auto logger = make_shared<PrintfLogger>(Logger::Level::Debug);
+    m_server = make_unique<Server>(logger);
 
-    bool error = false;
-    m_server_thread = async(launch::async,
-        [this,
-            port,
-            endpoint,
-            &server_thread_ready_signal,
-            &server_thread_ready_mutex,
-            &error] {
-            auto logger = make_shared<PrintfLogger>(Logger::Level::Debug);
-            Server server(logger);
-
-            auto handler = make_shared<WebsocketHandler>(this);
-            this->m_publisher = make_shared<CommandPublisher>(handler);
-            server.addWebSocketHandler(endpoint.c_str(), handler, true);
-
-            if (!server.startListening(port)) {
-                unique_lock<mutex> server_thread_ready_lock(server_thread_ready_mutex);
-                error = true;
-                server_thread_ready_signal.notify_all();
-                return;
-            }
-
-            // Needed to terminate in stopHook
-            {
-                unique_lock<mutex> server_thread_ready_lock(server_thread_ready_mutex);
-                this->m_server = &server;
-                server_thread_ready_signal.notify_all();
-            }
-
-            server.loop();
-        });
-
-    {
-        unique_lock<mutex> server_thread_ready_lock(server_thread_ready_mutex);
-        while (!this->m_server && !error) {
-            server_thread_ready_signal.wait(server_thread_ready_lock);
-        }
+    auto handler = make_shared<WebsocketHandler>(this);
+    this->m_publisher = make_shared<CommandPublisher>(handler);
+    m_server->addWebSocketHandler(endpoint.c_str(), handler, true);
+    if (!m_server->startListening(port)) {
+        return false;
     }
-    return !error;
+    m_server_thread = async(launch::async,
+        [this] {
+            this->m_server->loop();
+        });
+    return true;
 }
 
 void BaseWebsocketPublisherTask::updateHook()

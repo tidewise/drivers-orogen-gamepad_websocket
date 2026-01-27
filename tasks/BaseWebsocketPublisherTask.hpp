@@ -52,7 +52,7 @@ namespace gamepad_websocket {
         friend class BaseWebsocketPublisherTaskBase;
 
     protected:
-        seasocks::Server* m_server;
+        std::unique_ptr<seasocks::Server> m_server;
         std::future<void> m_server_thread;
         std::shared_ptr<CommandPublisher> m_publisher;
 

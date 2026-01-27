@@ -106,10 +106,10 @@ describe OroGen.gamepad_websocket.RawCommandWebsocketPublisherTask do
             end
 
             msg = assert_websocket_receives_message(@ws)
-            msg = msg.delete("time")
-            assert_equal({ axes: [0.5, 1],
-                           buttons: [{ pressed: true }, { pressed: false }],
-                           id: "js" }, msg)
+            msg.delete("time")
+            assert_equal({ "axes" => [0.5, 1],
+                           "buttons" => [{ "pressed" => true }, { "pressed" => false }],
+                           "id" => "js" }, msg)
         end
 
         it "publishes the raw command message in a JSON format to all connected " \
@@ -124,10 +124,12 @@ describe OroGen.gamepad_websocket.RawCommandWebsocketPublisherTask do
 
             [@ws, ws2].each do |ws_state|
                 msg = assert_websocket_receives_message(ws_state)
-                msg = msg.delete(:time)
-                assert_equal({ axes: [0.5, 1],
-                               buttons: [{ pressed: true }, { pressed: false }],
-                               id: "js" }, msg)
+                msg.delete("time")
+                assert_equal(
+                    { "axes" => [0.5, 1],
+                      "buttons" => [{ "pressed" => true }, { "pressed" => false }],
+                      "id" => "js" }, msg
+                )
             end
         end
     end

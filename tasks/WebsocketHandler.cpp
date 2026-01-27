@@ -14,7 +14,7 @@ using namespace gamepad_websocket;
 using namespace seasocks;
 using namespace std;
 
-Json::Value parseAxesToJson(std::vector<double> const& cmds)
+static Json::Value axesToJson(std::vector<double> const& cmds)
 {
     Json::Value array_msg;
     for (auto cmd : cmds) {
@@ -23,7 +23,7 @@ Json::Value parseAxesToJson(std::vector<double> const& cmds)
     return array_msg;
 }
 
-Json::Value parseButtonsToJson(std::vector<uint8_t> const& button_cmds)
+static Json::Value buttonsToJson(std::vector<uint8_t> const& button_cmds)
 {
     Json::Value buttons;
     for (auto btn : button_cmds) {
@@ -34,13 +34,12 @@ Json::Value parseButtonsToJson(std::vector<uint8_t> const& button_cmds)
     return buttons;
 }
 
-Json::Value parseRawCommand(controldev::RawCommand const& raw_cmd)
+static Json::Value rawCommandToJson(controldev::RawCommand const& raw_cmd)
 {
     Json::Value out_msg;
     out_msg["time"] = static_cast<Json::UInt64>(raw_cmd.time.toMilliseconds());
-    out_msg["id"] = raw_cmd.deviceIdentifier;
-    out_msg["axes"] = parseAxesToJson(raw_cmd.axisValue);
-    out_msg["buttons"] = parseButtonsToJson(raw_cmd.buttonValue);
+    out_msg["axes"] = axesToJson(raw_cmd.axisValue);
+    out_msg["buttons"] = buttonsToJson(raw_cmd.buttonValue);
     return out_msg;
 }
 
@@ -86,16 +85,16 @@ void WebsocketHandler::onDisconnect(WebSocket* socket)
 
 void WebsocketHandler::publishData()
 {
-    if (m_task && !m_task->m_outgoing_raw_command.has_value()) {
+    if (m_task && !m_task->outgoingRawCommand().has_value()) {
         LOG_WARN_S << "Task has no raw command to publish";
         return;
     }
 
     Json::FastWriter fast;
-    auto raw_cmd = *m_task->m_outgoing_raw_command;
-    auto msg = parseRawCommand(raw_cmd);
+    auto raw_cmd = *m_task->outgoingRawCommand();
+    auto msg = rawCommandToJson(raw_cmd);
     for (size_t i = 0; i < m_active_sockets.size(); i++) {
-        auto* socket = &m_active_sockets[i];
+        auto socket = &m_active_sockets[i];
         socket->connection->send(fast.write(msg));
         socket->statistics.sent++;
         socket->statistics.last_sent_message = Time::now();

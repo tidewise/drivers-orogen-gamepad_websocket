@@ -3,6 +3,7 @@
 #include "BaseWebsocketPublisherTask.hpp"
 #include "WebsocketHandler.hpp"
 #include "base-logging/Logging.hpp"
+#include "controldev/RawCommand.hpp"
 #include "gamepad_websocketTypes.hpp"
 
 #include <condition_variable>
@@ -50,16 +51,18 @@ bool BaseWebsocketPublisherTask::startHook()
     if (!BaseWebsocketPublisherTaskBase::startHook())
         return false;
 
-    string endpoint = _endpoint.get();
-    uint16_t port = _port.get();
-    m_server = nullptr;
 
     auto logger = make_shared<PrintfLogger>(Logger::Level::Debug);
     m_server = make_unique<Server>(logger);
 
-    auto handler = make_shared<WebsocketHandler>(this);
+    m_device_identifier = _device_identifier.get();
+    auto handler = make_shared<WebsocketHandler>(this, m_device_identifier);
     this->m_publisher = make_shared<CommandPublisher>(handler);
+
+    string endpoint = _endpoint.get();
     m_server->addWebSocketHandler(endpoint.c_str(), handler, true);
+
+    uint16_t port = _port.get();
     if (!m_server->startListening(port)) {
         return false;
     }
@@ -100,11 +103,11 @@ void BaseWebsocketPublisherTask::cleanupHook()
     BaseWebsocketPublisherTaskBase::cleanupHook();
 }
 
-void BaseWebsocketPublisherTask::outputStatistics(vector<Client> const& active_sockets)
+void BaseWebsocketPublisherTask::outputStatistics(vector<Client> const& active_clients)
 {
     Statistics stats;
     stats.time = Time::now();
-    for (auto socket : active_sockets) {
+    for (auto const& socket : active_clients) {
         stats.sockets_statistics.push_back(socket.statistics);
     }
     _statistics.write(stats);
@@ -113,4 +116,8 @@ void BaseWebsocketPublisherTask::outputStatistics(vector<Client> const& active_s
 void BaseWebsocketPublisherTask::publishRawCommand()
 {
     m_server->execute(m_publisher);
+}
+
+optional<controldev::RawCommand> const& BaseWebsocketPublisherTask::outgoingRawCommand() {
+    return m_outgoing_raw_command;
 }

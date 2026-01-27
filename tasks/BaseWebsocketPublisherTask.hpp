@@ -22,9 +22,10 @@ namespace gamepad_websocket {
      * run the data publish on the server thread.
      */
     class CommandPublisher : public seasocks::Server::Runnable {
-    public:
+    private:
         std::shared_ptr<WebsocketHandler> m_handler;
 
+    public:
         CommandPublisher(std::shared_ptr<WebsocketHandler> handler);
 
         void run() override;
@@ -55,12 +56,30 @@ namespace gamepad_websocket {
         std::unique_ptr<seasocks::Server> m_server;
         std::future<void> m_server_thread;
         std::shared_ptr<CommandPublisher> m_publisher;
-
-        void publishRawCommand();
-    public:
+        std::string m_device_identifier = "";
         std::optional<controldev::RawCommand> m_outgoing_raw_command;
 
-        void outputStatistics(std::vector<Client> const& active_sockets);
+        /*
+         * Requests that the server thread executes the current CommandPublisher
+         * in the next cycle.
+         */
+        void publishRawCommand();
+
+    public:
+        /*
+         * Returns the latest outgoing raw command to be published to all the
+         * clients, if there is one.
+         */
+        std::optional<controldev::RawCommand> const& outgoingRawCommand();
+
+        /*
+         * Take a list of the active clients statistics and write it in the
+         * statistics port. This is called in the server thread by the
+         * seasocks::WebSocket::Handler to write only when the statistics change.
+         *
+         * \param active_clients The clients that are currently active.
+         */
+        void outputStatistics(std::vector<Client> const& active_clients);
 
         /** TaskContext constructor for BaseWebsocketPublisherTask
          * \param name Name of the task. This name needs to be unique to make it

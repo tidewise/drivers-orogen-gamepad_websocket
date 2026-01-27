@@ -55,4 +55,6 @@ task_context "RawCommandWebsocketPublisherTask",
     input_port "raw_command", "controldev/RawCommand"
 
     runtime_states :INPUT_TIMEOUT, :PUBLISHING
+
+    exception_states :ID_MISMATCH
 end

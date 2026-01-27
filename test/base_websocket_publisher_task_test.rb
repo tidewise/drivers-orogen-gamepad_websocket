@@ -25,6 +25,7 @@ describe OroGen.gamepad_websocket.BaseWebsocketPublisherTask do
         @port = allocate_interface_port
         task.properties.port = @port
         task.properties.endpoint = "/ws"
+        task.properties.device_identifier = "js"
 
         @url = "ws://127.0.0.1:#{@port}/ws"
         @websocket_created = []
@@ -46,6 +47,12 @@ describe OroGen.gamepad_websocket.BaseWebsocketPublisherTask do
     describe "connection diagnostics" do
         before do
             syskit_configure_and_start(task)
+        end
+
+        it "reports the device identifier when the connection is established" do
+            ws = websocket_create
+            msg = assert_websocket_receives_message(ws)
+            assert_equal({ "id" => "js" }, msg)
         end
 
         it "reflects that a connection was established in the statistics port" do
@@ -114,7 +121,7 @@ describe OroGen.gamepad_websocket.BaseWebsocketPublisherTask do
                 state.received_messages += [message]
             end
         end
-    rescue Kontena::Websocket::CloseError # rubocop:disable Lint/SuppressedException
+    rescue Kontena::Websocket::CloseError
     ensure
         event&.set
     end
@@ -138,5 +145,17 @@ describe OroGen.gamepad_websocket.BaseWebsocketPublisherTask do
     def websocket_disconnect(state)
         ws = state.ws
         ws.close
+    end
+
+    def assert_websocket_receives_message(state, timeout: 3)
+        deadline = Time.now + timeout
+        while Time.now < deadline
+            unless state.received_messages.empty?
+                return JSON.parse(state.received_messages.pop)
+            end
+
+            sleep 0.1
+        end
+        flunk("no messages received in #{timeout}s")
     end
 end

@@ -43,8 +43,10 @@ static Json::Value rawCommandToJson(controldev::RawCommand const& raw_cmd)
     return out_msg;
 }
 
-WebsocketHandler::WebsocketHandler(BaseWebsocketPublisherTask* task)
-    : m_task(task)
+WebsocketHandler::WebsocketHandler(BaseWebsocketPublisherTask* task,
+    string device_identifier)
+    : m_device_identifier(device_identifier)
+    , m_task(task)
 {
     if (task == nullptr) {
         throw invalid_argument("WebsocketHandler task cannot be a nullptr");
@@ -57,6 +59,10 @@ void WebsocketHandler::onConnect(WebSocket* socket)
     new_socket.connection = socket;
     m_active_sockets.push_back(new_socket);
     m_task->outputStatistics(m_active_sockets);
+    Json::Value response;
+    response["id"] = m_device_identifier;
+    Json::FastWriter writer;
+    socket->send(writer.write(response));
 }
 
 void WebsocketHandler::onData(WebSocket* socket, const char* data)

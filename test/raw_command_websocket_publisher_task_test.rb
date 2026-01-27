@@ -28,6 +28,7 @@ describe OroGen.gamepad_websocket.RawCommandWebsocketPublisherTask do
         task.properties.port = @port
         task.properties.endpoint = "/ws"
         task.properties.command_timeout = Time.at(1)
+        task.properties.device_identifier = "js"
 
         @url = "ws://127.0.0.1:#{@port}/ws"
         @websocket_created = []
@@ -40,10 +41,24 @@ describe OroGen.gamepad_websocket.RawCommandWebsocketPublisherTask do
         end
     end
 
+    it "go into INPUT MISTMATCH if the sample's device identifier is different " \
+       "from the configured one" do
+        task.properties.device_identifier = "macarena"
+
+        syskit_configure_and_start(task)
+        expect_execution do
+            syskit_write task.raw_command_port, raw_command([0.5, 1], [1, 0])
+        end.to do
+            emit(task.id_mismatch_event)
+        end
+    end
+
     describe "publishing raw commands" do
         before do
             syskit_configure_and_start(task)
             @ws = websocket_create
+            # Receives the connection message
+            assert_websocket_receives_message(@ws)
         end
 
         it "reflects on the statistics whenever a raw command is published" do
@@ -108,8 +123,8 @@ describe OroGen.gamepad_websocket.RawCommandWebsocketPublisherTask do
             msg = assert_websocket_receives_message(@ws)
             msg.delete("time")
             assert_equal({ "axes" => [0.5, 1],
-                           "buttons" => [{ "pressed" => true }, { "pressed" => false }],
-                           "id" => "js" }, msg)
+                           "buttons" => [{ "pressed" => true }, { "pressed" => false }] },
+                         msg)
         end
 
         it "publishes the raw command message in a JSON format to all connected " \
@@ -127,8 +142,8 @@ describe OroGen.gamepad_websocket.RawCommandWebsocketPublisherTask do
                 msg.delete("time")
                 assert_equal(
                     { "axes" => [0.5, 1],
-                      "buttons" => [{ "pressed" => true }, { "pressed" => false }],
-                      "id" => "js" }, msg
+                      "buttons" => [{ "pressed" => true }, { "pressed" => false }] },
+                    msg
                 )
             end
         end

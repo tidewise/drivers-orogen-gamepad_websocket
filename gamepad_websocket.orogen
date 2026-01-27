@@ -40,9 +40,14 @@ task_context "BaseWebsocketPublisherTask" do
     # The endpoint pointing to the command websocket handler
     property "endpoint", "string", "/ws"
 
+    # The name that identifies this specific device
+    property "device_identifier", "string"
+
     output_port "statistics", "gamepad_websocket/Statistics"
 
     periodic 0.1
+
+    exception_states :ID_MISMATCH
 end
 
 # Takes raw command and publishes it via a websocket
@@ -52,6 +57,10 @@ task_context "RawCommandWebsocketPublisherTask",
     # published to the websocket
     property "command_timeout", "base/Time"
 
+    # The command to be writen to the websocket.
+    #
+    # The device_identifier field MUST be the same as the device_identifier set as a
+    # property for this task
     input_port "raw_command", "controldev/RawCommand"
 
     runtime_states :INPUT_TIMEOUT, :PUBLISHING

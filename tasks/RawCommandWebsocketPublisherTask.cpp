@@ -2,6 +2,7 @@
 
 #include "RawCommandWebsocketPublisherTask.hpp"
 #include "base-logging/Logging.hpp"
+#include "base-logging/logging/logging_iostream_style.h"
 #include "controldev/RawCommand.hpp"
 #include "rtt/FlowStatus.hpp"
 
@@ -57,6 +58,13 @@ void RawCommandWebsocketPublisherTask::updateHook()
         if (state() != INPUT_TIMEOUT) {
             state(INPUT_TIMEOUT);
         }
+        return;
+    }
+
+    if (m_device_identifier != raw_cmd.deviceIdentifier) {
+        LOG_ERROR_S << "Got id " << raw_cmd.deviceIdentifier << " while expecting "
+                    << m_device_identifier;
+        exception(ID_MISMATCH);
         return;
     }
 

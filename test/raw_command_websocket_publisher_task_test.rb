@@ -41,18 +41,6 @@ describe OroGen.gamepad_websocket.RawCommandWebsocketPublisherTask do
         end
     end
 
-    it "go into INPUT MISTMATCH if the sample's device identifier is different " \
-       "from the configured one" do
-        task.properties.device_identifier = "macarena"
-
-        syskit_configure_and_start(task)
-        expect_execution do
-            syskit_write task.raw_command_port, raw_command([0.5, 1], [1, 0])
-        end.to do
-            emit(task.id_mismatch_event)
-        end
-    end
-
     describe "publishing raw commands" do
         before do
             syskit_configure_and_start(task)
@@ -82,6 +70,14 @@ describe OroGen.gamepad_websocket.RawCommandWebsocketPublisherTask do
             actual.sockets_statistics.each do |stats|
                 assert_equal 1, stats.sent
             end
+        end
+
+        it "go into INPUT MISTMATCH if the sample's device identifier is different " \
+           "from the configured one" do
+            raw_cmd = raw_command([0.5, 1], [1, 0], "macarena")
+            expect_execution do
+                syskit_write task.raw_command_port, raw_cmd
+            end.to { emit(task.id_mismatch_event) }
         end
 
         it "stops publishing if no new raw command sample arrives for command timeout " \
@@ -130,6 +126,9 @@ describe OroGen.gamepad_websocket.RawCommandWebsocketPublisherTask do
         it "publishes the raw command message in a JSON format to all connected " \
            "clients" do
             ws2 = websocket_create
+            # Remove the onConnect ID message from the list
+            assert_websocket_receives_message(ws2)
+
             expect_execution do
                 syskit_write task.raw_command_port, raw_command([0.5, 1], [1, 0])
             end.to do

@@ -43,6 +43,8 @@ bool BaseWebsocketPublisherTask::configureHook()
 {
     if (!BaseWebsocketPublisherTaskBase::configureHook())
         return false;
+
+    m_device_identifier = _device_identifier.get();
     return true;
 }
 
@@ -55,7 +57,6 @@ bool BaseWebsocketPublisherTask::startHook()
     auto logger = make_shared<PrintfLogger>(Logger::Level::Debug);
     m_server = make_unique<Server>(logger);
 
-    m_device_identifier = _device_identifier.get();
     auto handler = make_shared<WebsocketHandler>(this, m_device_identifier);
     this->m_publisher = make_shared<CommandPublisher>(handler);
 

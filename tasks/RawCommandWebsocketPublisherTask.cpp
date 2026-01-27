@@ -60,6 +60,9 @@ void RawCommandWebsocketPublisherTask::updateHook()
         }
         return;
     }
+    else if (flow_status == RTT::NoData) {
+        return;
+    }
 
     if (m_device_identifier != raw_cmd.deviceIdentifier) {
         LOG_ERROR_S << "Got id " << raw_cmd.deviceIdentifier << " while expecting "

@@ -100,15 +100,13 @@ void BaseWebsocketPublisherTask::cleanupHook()
     BaseWebsocketPublisherTaskBase::cleanupHook();
 }
 
-void BaseWebsocketPublisherTask::outputStatistics()
+void BaseWebsocketPublisherTask::outputStatistics(vector<Client> const& active_sockets)
 {
     Statistics stats;
     stats.time = Time::now();
-    for (auto socket : m_active_sockets) {
+    for (auto socket : active_sockets) {
         stats.sockets_statistics.push_back(socket.statistics);
     }
-
-    // Filled by the WebsocketHandler
     _statistics.write(stats);
 }
 

@@ -2,6 +2,7 @@
 #define GAMEPAD_WEBSOCKET_WEBSOCKETHANDLER_HPP
 
 #include "BaseWebsocketPublisherTask.hpp"
+#include "Client.hpp"
 
 #include <optional>
 #include <seasocks/WebSocket.h>
@@ -12,6 +13,8 @@ namespace gamepad_websocket {
      * define the callbacks the server calls for each interaction from a client.
      */
     class WebsocketHandler : public seasocks::WebSocket::Handler {
+        std::vector<Client> m_active_sockets;
+
         void onConnect(seasocks::WebSocket* socket) override;
         void onData(seasocks::WebSocket* socket, const char* data) override;
         void onDisconnect(seasocks::WebSocket* socket) override;

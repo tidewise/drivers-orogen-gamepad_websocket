@@ -59,9 +59,8 @@ namespace gamepad_websocket {
         void publishRawCommand();
     public:
         std::optional<controldev::RawCommand> m_outgoing_raw_command;
-        std::vector<Client> m_active_sockets;
 
-        void outputStatistics();
+        void outputStatistics(std::vector<Client> const& active_sockets);
 
         /** TaskContext constructor for BaseWebsocketPublisherTask
          * \param name Name of the task. This name needs to be unique to make it

@@ -3,7 +3,6 @@
 #include "Client.hpp"
 
 #include "base-logging/Logging.hpp"
-#include "base-logging/logging/logging_iostream_style.h"
 #include "controldev/RawCommand.hpp"
 
 #include <jsoncpp/json/value.h>
@@ -57,8 +56,8 @@ void WebsocketHandler::onConnect(WebSocket* socket)
 {
     Client new_socket;
     new_socket.connection = socket;
-    m_task->m_active_sockets.push_back(new_socket);
-    m_task->outputStatistics();
+    m_active_sockets.push_back(new_socket);
+    m_task->outputStatistics(m_active_sockets);
 }
 
 void WebsocketHandler::onData(WebSocket* socket, const char* data)
@@ -68,10 +67,10 @@ void WebsocketHandler::onData(WebSocket* socket, const char* data)
         LOG_ERROR_S << "Got data from a connection that is not active!";
         return;
     }
-    auto& active_socket = m_task->m_active_sockets[*socket_idx];
+    auto& active_socket = m_active_sockets[*socket_idx];
     active_socket.statistics.received++;
     active_socket.statistics.last_received_message = Time::now();
-    m_task->outputStatistics();
+    m_task->outputStatistics(m_active_sockets);
 }
 
 void WebsocketHandler::onDisconnect(WebSocket* socket)
@@ -81,8 +80,8 @@ void WebsocketHandler::onDisconnect(WebSocket* socket)
         LOG_ERROR_S << "Trying to disconnect a socket that is not active!";
         return;
     }
-    m_task->m_active_sockets.erase(m_task->m_active_sockets.begin() + *socket_idx);
-    m_task->outputStatistics();
+    m_active_sockets.erase(m_active_sockets.begin() + *socket_idx);
+    m_task->outputStatistics(m_active_sockets);
 }
 
 void WebsocketHandler::publishData()
@@ -95,19 +94,19 @@ void WebsocketHandler::publishData()
     Json::FastWriter fast;
     auto raw_cmd = *m_task->m_outgoing_raw_command;
     auto msg = parseRawCommand(raw_cmd);
-    for (size_t i = 0; i < m_task->m_active_sockets.size(); i++) {
-        auto* socket = &m_task->m_active_sockets[i];
+    for (size_t i = 0; i < m_active_sockets.size(); i++) {
+        auto* socket = &m_active_sockets[i];
         socket->connection->send(fast.write(msg));
         socket->statistics.sent++;
         socket->statistics.last_sent_message = Time::now();
     }
-    m_task->outputStatistics();
+    m_task->outputStatistics(m_active_sockets);
 }
 
 optional<size_t> WebsocketHandler::findSocketIndexFromConnection(WebSocket* socket) const
 {
-    for (size_t i = 0; i < m_task->m_active_sockets.size(); i++) {
-        auto s = m_task->m_active_sockets[i].connection;
+    for (size_t i = 0; i < m_active_sockets.size(); i++) {
+        auto s = m_active_sockets[i].connection;
         if (s == socket) {
             return i;
         }

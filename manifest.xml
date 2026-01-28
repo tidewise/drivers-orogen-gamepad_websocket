@@ -5,7 +5,10 @@
   <author>Jhonas Moura</author>
   <license>Proprietary</license>
   <depend package="base/cmake" />
-  <depend package="drivers/orogen/linux_gpios" />
   <depend package="drivers/controldev" />
-  <test_depend package="tools/syskit" />
+  <depend package="drivers/orogen/linux_gpios" />
+  <depend package="jsoncpp" />
+  <depend package="tools/seasocks" />
+  <test_depend name="kontena-websocket-client" />
+  <test_depend name="tools/syskit" />
 </package>

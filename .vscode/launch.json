@@ -1,0 +1,25 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "orogen - gamepad_websocket::BaseWebsocketPublisherTask",
+            "type": "orogen",
+            "request": "launch",
+            "deploy": "gamepad_websocket::BaseWebsocketPublisherTask",
+            "deployAs": "websocket",
+            "cwd": "${workspaceRoot}",
+            "externalConsole": true,
+            "stopAtEntry": false
+        },
+        {
+            "name": "orogen - gamepad_websocket::RawCommandWebsocketPublisherTask",
+            "type": "orogen",
+            "request": "launch",
+            "deploy": "gamepad_websocket::RawCommandWebsocketPublisherTask",
+            "deployAs": "websocket",
+            "cwd": "${workspaceRoot}",
+            "externalConsole": true,
+            "stopAtEntry": false
+        }
+    ]
+}

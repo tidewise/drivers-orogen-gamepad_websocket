@@ -6,3 +6,6 @@ build/*
 
 *autobuild-stamp
 *.cache/*
+bundle/*
+.vscode/c_cpp*
+orocos.log

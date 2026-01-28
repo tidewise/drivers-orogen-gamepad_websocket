@@ -2,10 +2,17 @@
 
 name "gamepad_websocket"
 
-import_types_from "gamepad_websocketTypes.hpp"
-import_types_from "std"
-import_types_from "linux_gpios"
+cxx_standard "c++17"
+
+using_library "base-logging"
 using_library "controldev"
+using_library "jsoncpp", typekit: false
+
+import_types_from "base"
+import_types_from "gamepad_websocketTypes.hpp"
+import_types_from "linux_gpios"
+import_types_from "std"
+
 import_types_from "controldev/RawCommand.hpp"
 
 task_context "GamepadCommandAggregatorTask" do
@@ -21,4 +28,42 @@ task_context "GamepadCommandAggregatorTask" do
     output_port "aggregated_command", "/controldev/RawCommand"
 
     port_driven
+end
+
+# Sets up a websocket serving the given endpoint at the given port
+task_context "BaseWebsocketPublisherTask" do
+    needs_configuration
+
+    # The port to serve the websocket
+    property "port", "uint16_t"
+
+    # The endpoint pointing to the command websocket handler
+    property "endpoint", "string", "/ws"
+
+    # The name that identifies this specific device
+    property "device_identifier", "string"
+
+    output_port "statistics", "gamepad_websocket/Statistics"
+
+    periodic 0.1
+
+    exception_states :ID_MISMATCH
+end
+
+# Takes raw command and publishes it via a websocket
+task_context "RawCommandWebsocketPublisherTask",
+             subclasses: "BaseWebsocketPublisherTask" do
+    # How much time since the last raw_command sample before the commands are no longer
+    # published to the websocket
+    property "command_timeout", "base/Time"
+
+    # The command to be writen to the websocket.
+    #
+    # The device_identifier field MUST be the same as the device_identifier set as a
+    # property for this task
+    input_port "raw_command", "controldev/RawCommand"
+
+    runtime_states :INPUT_TIMEOUT, :PUBLISHING
+
+    exception_states :ID_MISMATCH
 end

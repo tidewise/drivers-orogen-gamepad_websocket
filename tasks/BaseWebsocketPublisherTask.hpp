@@ -56,7 +56,7 @@ namespace gamepad_websocket {
         std::unique_ptr<seasocks::Server> m_server;
         std::future<void> m_server_thread;
         std::shared_ptr<CommandPublisher> m_publisher;
-        std::string m_device_identifier = "";
+        std::optional<std::string> m_device_identifier;
         std::optional<controldev::RawCommand> m_outgoing_raw_command;
 
         /*
@@ -72,6 +72,7 @@ namespace gamepad_websocket {
          */
         std::optional<controldev::RawCommand> const& outgoingRawCommand();
 
+        std::optional<std::string> const& deviceIdentifier();
         /*
          * Take a list of the active clients statistics and write it in the
          * statistics port. This is called in the server thread by the

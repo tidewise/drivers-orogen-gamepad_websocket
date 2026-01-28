@@ -16,7 +16,7 @@ using namespace std;
 
 static Json::Value axesToJson(std::vector<double> const& cmds)
 {
-    Json::Value array_msg;
+    Json::Value array_msg = Json::arrayValue;
     for (auto cmd : cmds) {
         array_msg.append(cmd);
     }
@@ -25,7 +25,7 @@ static Json::Value axesToJson(std::vector<double> const& cmds)
 
 static Json::Value buttonsToJson(std::vector<uint8_t> const& button_cmds)
 {
-    Json::Value buttons;
+    Json::Value buttons = Json::arrayValue;
     for (auto btn : button_cmds) {
         Json::Value button_json;
         button_json["pressed"] = btn == 1;

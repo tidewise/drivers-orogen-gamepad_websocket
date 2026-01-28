@@ -143,11 +143,13 @@ describe OroGen.gamepad_websocket.RawCommandWebsocketPublisherTask do
             end
         end
 
-        it "go into INPUT MISTMATCH if the sample's device identifier is different " \
-           "from the configured one" do
+        it "go into INPUT MISTMATCH if the sample's device identifier changes" do
             raw_cmd = raw_command([0.5, 1], [1, 0], "macarena")
+            syskit_write task.raw_command_port, raw_cmd
+
+            new_raw_cmd = raw_command([0.5, 1], [1, 0], "baila tu cuerpo")
             expect_execution do
-                syskit_write task.raw_command_port, raw_cmd
+                syskit_write task.raw_command_port, new_raw_cmd
             end.to { emit(task.id_mismatch_event) }
         end
 

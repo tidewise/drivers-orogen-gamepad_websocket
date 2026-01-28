@@ -58,5 +58,6 @@ task_context "RawCommandWebsocketPublisherTask",
 
     runtime_states :INPUT_TIMEOUT, :PUBLISHING
 
+    # ID_MISTMATCH: emitted when the deviceIdentifier changes throghout the execution
     exception_states :ID_MISMATCH
 end

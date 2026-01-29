@@ -61,3 +61,24 @@ task_context "RawCommandWebsocketPublisherTask",
     # ID_MISTMATCH: emitted when the deviceIdentifier changes throghout the execution
     exception_states :ID_MISMATCH
 end
+
+# Takes a GPIOState and converts it to RawCommand before publishing it via a websocket
+task_context "GPIOStateWebsocketPublisherTask",
+             subclasses: "BaseWebsocketPublisherTask" do
+    # How much time since the last gpio_state sample before the commands are no longer
+    # published to the websocket
+    property "gpio_state_timeout", "base/Time"
+
+    # Used by the websocket peer to identify which kind of gamepad is connected. This
+    # is sent as a response during connection.
+    property "device_identifier",  "string"
+
+    # The GPIOState which is converted to RawCommand before being published.
+    #
+    # All GPIOStates are sent as button presses to the websocket.
+    input_port "gpio_state", "linux_gpios/GPIOState"
+
+    runtime_states :INPUT_TIMEOUT, :PUBLISHING
+
+    exception_states :SIZE_MISMATCH
+end

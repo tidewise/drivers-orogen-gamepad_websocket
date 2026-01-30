@@ -16,7 +16,7 @@ using namespace std;
 
 static Json::Value axesToJson(std::vector<double> const& cmds)
 {
-    Json::Value array_msg;
+    Json::Value array_msg = Json::arrayValue;
     for (auto cmd : cmds) {
         array_msg.append(cmd);
     }
@@ -25,7 +25,7 @@ static Json::Value axesToJson(std::vector<double> const& cmds)
 
 static Json::Value buttonsToJson(std::vector<uint8_t> const& button_cmds)
 {
-    Json::Value buttons;
+    Json::Value buttons = Json::arrayValue;
     for (auto btn : button_cmds) {
         Json::Value button_json;
         button_json["pressed"] = btn == 1;
@@ -43,10 +43,8 @@ static Json::Value rawCommandToJson(controldev::RawCommand const& raw_cmd)
     return out_msg;
 }
 
-WebsocketHandler::WebsocketHandler(BaseWebsocketPublisherTask* task,
-    string device_identifier)
-    : m_device_identifier(device_identifier)
-    , m_task(task)
+WebsocketHandler::WebsocketHandler(BaseWebsocketPublisherTask* task)
+    : m_task(task)
 {
     if (task == nullptr) {
         throw invalid_argument("WebsocketHandler task cannot be a nullptr");
@@ -55,13 +53,21 @@ WebsocketHandler::WebsocketHandler(BaseWebsocketPublisherTask* task,
 
 void WebsocketHandler::onConnect(WebSocket* socket)
 {
+    Json::FastWriter writer;
+    Json::Value response;
+    response["id"] = Json::Value::null;
+
+    auto device_identifier = m_task->deviceIdentifier();
+    if (!device_identifier.has_value()) {
+        socket->send(writer.write(response));
+        return;
+    }
+
     Client new_socket;
     new_socket.connection = socket;
     m_active_sockets.push_back(new_socket);
     m_task->outputStatistics(m_active_sockets);
-    Json::Value response;
-    response["id"] = m_device_identifier;
-    Json::FastWriter writer;
+    response["id"] = *device_identifier;
     socket->send(writer.write(response));
 }
 

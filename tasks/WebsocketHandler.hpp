@@ -14,7 +14,6 @@ namespace gamepad_websocket {
      */
     class WebsocketHandler : public seasocks::WebSocket::Handler {
         std::vector<Client> m_active_sockets;
-        std::string m_device_identifier = "";
 
         void onConnect(seasocks::WebSocket* socket) override;
         void onData(seasocks::WebSocket* socket, const char* data) override;
@@ -24,8 +23,7 @@ namespace gamepad_websocket {
             seasocks::WebSocket* socket) const;
 
     public:
-        WebsocketHandler(BaseWebsocketPublisherTask* task = nullptr,
-            std::string device_identifier = "");
+        WebsocketHandler(BaseWebsocketPublisherTask* task = nullptr);
 
         /**
          * @brief Publishes the outgoing RawCommand stored in the task to all

@@ -4,7 +4,9 @@
 #include "base-logging/Logging.hpp"
 #include "base-logging/logging/logging_iostream_style.h"
 #include "controldev/RawCommand.hpp"
+#include "gamepad_websocket/RawCommandWebsocketPublisherTaskBase.hpp"
 #include "rtt/FlowStatus.hpp"
+#include <sstream>
 
 using namespace base;
 using namespace gamepad_websocket;
@@ -64,13 +66,16 @@ void RawCommandWebsocketPublisherTask::updateHook()
         return;
     }
 
-    if (m_device_identifier != raw_cmd.deviceIdentifier) {
-        LOG_ERROR_S << "Got id " << raw_cmd.deviceIdentifier << " while expecting "
-                    << m_device_identifier;
+    if (!m_device_identifier.has_value()) {
+        m_device_identifier = raw_cmd.deviceIdentifier;
+    }
+    else if (*m_device_identifier != raw_cmd.deviceIdentifier) {
+        LOG_ERROR_S << "Detected that a different device was connected. That is not "
+                    << "supported. Got " << raw_cmd.deviceIdentifier << " but had "
+                    << *m_device_identifier;
         exception(ID_MISMATCH);
         return;
     }
-
     publishRawCommand();
 }
 

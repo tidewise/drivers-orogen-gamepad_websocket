@@ -44,7 +44,6 @@ bool BaseWebsocketPublisherTask::configureHook()
     if (!BaseWebsocketPublisherTaskBase::configureHook())
         return false;
 
-    m_device_identifier = _device_identifier.get();
     return true;
 }
 
@@ -53,11 +52,10 @@ bool BaseWebsocketPublisherTask::startHook()
     if (!BaseWebsocketPublisherTaskBase::startHook())
         return false;
 
-
     auto logger = make_shared<PrintfLogger>(Logger::Level::Debug);
     m_server = make_unique<Server>(logger);
 
-    auto handler = make_shared<WebsocketHandler>(this, m_device_identifier);
+    auto handler = make_shared<WebsocketHandler>(this);
     this->m_publisher = make_shared<CommandPublisher>(handler);
 
     string endpoint = _endpoint.get();
@@ -121,4 +119,8 @@ void BaseWebsocketPublisherTask::publishRawCommand()
 
 optional<controldev::RawCommand> const& BaseWebsocketPublisherTask::outgoingRawCommand() {
     return m_outgoing_raw_command;
+}
+
+optional<string> const& BaseWebsocketPublisherTask::deviceIdentifier() {
+    return m_device_identifier;
 }

@@ -39,6 +39,7 @@ bool RawCommandWebsocketPublisherTask::startHook()
         return false;
 
     m_command_deadline = Time::now() + m_command_timeout;
+    m_device_identifier = {};
     return true;
 }
 

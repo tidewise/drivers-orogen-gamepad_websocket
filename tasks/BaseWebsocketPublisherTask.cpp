@@ -51,6 +51,7 @@ bool BaseWebsocketPublisherTask::startHook()
 {
     if (!BaseWebsocketPublisherTaskBase::startHook())
         return false;
+    m_outgoing_raw_command = {};
 
     auto logger = make_shared<PrintfLogger>(Logger::Level::Debug);
     m_server = make_unique<Server>(logger);
@@ -65,10 +66,7 @@ bool BaseWebsocketPublisherTask::startHook()
     if (!m_server->startListening(port)) {
         return false;
     }
-    m_server_thread = async(launch::async,
-        [this] {
-            this->m_server->loop();
-        });
+    m_server_thread = async(launch::async, [this] { this->m_server->loop(); });
     return true;
 }
 
@@ -117,10 +115,12 @@ void BaseWebsocketPublisherTask::publishRawCommand()
     m_server->execute(m_publisher);
 }
 
-optional<controldev::RawCommand> const& BaseWebsocketPublisherTask::outgoingRawCommand() {
+optional<controldev::RawCommand> const& BaseWebsocketPublisherTask::outgoingRawCommand()
+{
     return m_outgoing_raw_command;
 }
 
-optional<string> const& BaseWebsocketPublisherTask::deviceIdentifier() {
+optional<string> const& BaseWebsocketPublisherTask::deviceIdentifier()
+{
     return m_device_identifier;
 }

@@ -10,6 +10,7 @@ using_library "jsoncpp", typekit: false
 
 import_types_from "base"
 import_types_from "gamepad_websocketTypes.hpp"
+import_types_from "linux_gpios"
 import_types_from "std"
 
 import_types_from "controldev/RawCommand.hpp"

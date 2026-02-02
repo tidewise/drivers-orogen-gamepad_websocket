@@ -6,6 +6,7 @@
   <license>Proprietary</license>
   <depend package="base/cmake" />
   <depend package="drivers/controldev" />
+  <depend package="drivers/orogen/linux_gpios" />
   <depend package="jsoncpp" />
   <depend package="tools/seasocks" />
   <test_depend name="kontena-websocket-client" />

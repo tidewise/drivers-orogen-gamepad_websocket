@@ -37,7 +37,7 @@ static Json::Value buttonsToJson(vector<uint8_t> const& button_cmds)
 static Json::Value rawCommandToJson(controldev::RawCommand const& raw_cmd)
 {
     Json::Value out_msg;
-    out_msg["time"] = static_cast<Json::UInt64>(raw_cmd.time.toMilliseconds());
+    out_msg["timestamp"] = static_cast<Json::UInt64>(raw_cmd.time.toMilliseconds());
     out_msg["axes"] = axesToJson(raw_cmd.axisValue);
     out_msg["buttons"] = buttonsToJson(raw_cmd.buttonValue);
     return out_msg;
@@ -100,13 +100,14 @@ void WebsocketHandler::onDisconnect(WebSocket* socket)
 
 void WebsocketHandler::publishData()
 {
-    if (m_task && !m_task->outgoingRawCommand().has_value()) {
+    auto outgoing_raw_command = m_task->outgoingRawCommand();
+    if (m_task && !outgoing_raw_command.has_value()) {
         LOG_WARN_S << "Task has no raw command to publish";
         return;
     }
 
     Json::FastWriter fast;
-    auto raw_cmd = *m_task->outgoingRawCommand();
+    auto raw_cmd = *outgoing_raw_command;
     auto msg = rawCommandToJson(raw_cmd);
     for (size_t i = 0; i < m_active_sockets.size(); i++) {
         auto socket = &m_active_sockets[i];

@@ -66,6 +66,8 @@ namespace gamepad_websocket {
          */
         void publishRawCommand();
 
+        bool validateDeviceIdTransform(std::string const& transform_str);
+
     public:
         /*
          * Returns the latest outgoing raw command to be published to all the

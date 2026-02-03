@@ -25,7 +25,7 @@ namespace gamepad_websocket {
 
     public:
         WebsocketHandler(BaseWebsocketPublisherTask* task = nullptr,
-            std::string device_id_transform = "");
+            std::string const& device_id_transform = "");
 
         /**
          * @brief Publishes the outgoing RawCommand stored in the task to all

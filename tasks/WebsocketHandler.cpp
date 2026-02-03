@@ -44,7 +44,7 @@ static Json::Value rawCommandToJson(controldev::RawCommand const& raw_cmd)
 }
 
 WebsocketHandler::WebsocketHandler(BaseWebsocketPublisherTask* task,
-    string device_id_transform)
+    string const& device_id_transform)
     : m_task(task)
     , m_device_id_transform(device_id_transform)
 {
@@ -129,7 +129,7 @@ optional<size_t> WebsocketHandler::findSocketIndexFromConnection(WebSocket* sock
     return {};
 }
 
-string WebsocketHandler::transformDeviceId(string device_identifier) const
+string WebsocketHandler::transformDeviceId(string const& device_identifier) const
 {
     if (m_device_id_transform.empty()) {
         return device_identifier;
@@ -137,10 +137,8 @@ string WebsocketHandler::transformDeviceId(string device_identifier) const
 
     size_t pos = 0;
     string result = m_device_id_transform;
-    while ((pos = m_device_id_transform.find("%1", pos)) != string::npos) {
+    if ((pos = m_device_id_transform.find("%1", pos)) != string::npos) {
         result.replace(pos, 2, device_identifier);
-        // Deal with offchance the device has %1 in their name
-        pos += result.length();
     }
     return result;
 }

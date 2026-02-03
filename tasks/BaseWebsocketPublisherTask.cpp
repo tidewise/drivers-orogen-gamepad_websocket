@@ -43,8 +43,12 @@ bool BaseWebsocketPublisherTask::configureHook()
     if (!BaseWebsocketPublisherTaskBase::configureHook())
         return false;
 
+    auto device_id_transform_str = _device_identifier_transform.get();
+    if (!validateDeviceIdTransform(device_id_transform_str)) {
+        return false;
+    }
 
-    m_device_id_transform = _device_identifier_transform.get();
+    m_device_id_transform = device_id_transform_str;
     return true;
 }
 
@@ -124,4 +128,24 @@ optional<controldev::RawCommand> const& BaseWebsocketPublisherTask::outgoingRawC
 optional<string> const& BaseWebsocketPublisherTask::deviceIdentifier()
 {
     return m_device_identifier;
+}
+
+bool BaseWebsocketPublisherTask::validateDeviceIdTransform(string const& transform_str)
+{
+    const string token = "%1";
+    auto first_pos = transform_str.find(token);
+    // No %1 token is a valid transform string
+    if (first_pos == string::npos) {
+        return true;
+    }
+
+    auto second_pos = transform_str.find(token, first_pos + 1);
+    // A single %1 token is a valid transform string
+    if (second_pos == string::npos) {
+        return true;
+    }
+
+    LOG_ERROR_S << "Having more than a %1 token is not supported in the device "
+                   "identifier trasnform string";
+    return false;
 }

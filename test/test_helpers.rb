@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+class WebsocketMessageTimeout < RuntimeError; end
+
 def allocate_interface_port
     server = TCPServer.new(0)
     server.local_address.ip_port
@@ -72,7 +74,24 @@ def assert_websocket_receives_message(state, timeout: 3)
 
         sleep 0.1
     end
-    flunk("no messages received in #{timeout}s")
+    raise WebsocketMessageTimeout,
+          "did not receive the expected message #{message} in #{timeout}s"
+end
+
+def assert_websocket_receives_expected_message(state, expected, timeout: 3)
+    deadline = Time.now + timeout
+    while Time.now < deadline
+        unless state.received_messages.empty?
+            msg = JSON.parse(state.received_messages.pop)
+            msg.delete("timestamp")
+            pass if msg == expected
+            return
+        end
+
+        sleep 0.1
+    end
+    raise WebsocketMessageTimeout,
+          "did not receive the expected message #{message} in #{timeout}s"
 end
 
 def common_connection_diagnostics_tests(ctxt) # rubocop:disable Metrics/AbcSize

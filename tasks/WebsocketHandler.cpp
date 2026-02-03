@@ -64,13 +64,13 @@ void WebsocketHandler::onConnect(WebSocket* socket)
         socket->send(writer.write(response));
         return;
     }
-    device_identifier = transformDeviceId(*device_identifier);
+    device_identifier = transformDeviceId(device_identifier.value());
 
     Client new_socket;
     new_socket.connection = socket;
     m_active_sockets.push_back(new_socket);
     m_task->outputStatistics(m_active_sockets);
-    response["id"] = *device_identifier;
+    response["id"] = device_identifier.value();
     socket->send(writer.write(response));
 }
 
@@ -107,7 +107,7 @@ void WebsocketHandler::publishData()
     }
 
     Json::FastWriter fast;
-    auto raw_cmd = *outgoing_raw_command;
+    auto raw_cmd = outgoing_raw_command.value();
     auto msg = rawCommandToJson(raw_cmd);
     for (size_t i = 0; i < m_active_sockets.size(); i++) {
         auto socket = &m_active_sockets[i];

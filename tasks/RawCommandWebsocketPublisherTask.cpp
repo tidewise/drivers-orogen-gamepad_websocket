@@ -6,13 +6,12 @@
 #include "controldev/RawCommand.hpp"
 #include "gamepad_websocket/RawCommandWebsocketPublisherTaskBase.hpp"
 #include "rtt/FlowStatus.hpp"
-#include <sstream>
 
 using namespace base;
 using namespace gamepad_websocket;
+using namespace std;
 
-RawCommandWebsocketPublisherTask::RawCommandWebsocketPublisherTask(
-    std::string const& name)
+RawCommandWebsocketPublisherTask::RawCommandWebsocketPublisherTask(string const& name)
     : RawCommandWebsocketPublisherTaskBase(name)
 {
 }
@@ -55,6 +54,7 @@ void RawCommandWebsocketPublisherTask::updateHook()
         if (state() != PUBLISHING) {
             state(PUBLISHING);
         }
+        lock_guard<mutex> lock(m_shared_data_lock);
         m_outgoing_raw_command = raw_cmd;
     }
     else if (now > m_command_deadline) {
@@ -68,12 +68,13 @@ void RawCommandWebsocketPublisherTask::updateHook()
     }
 
     if (!m_device_identifier.has_value()) {
+        lock_guard<mutex> lock(m_shared_data_lock);
         m_device_identifier = raw_cmd.deviceIdentifier;
     }
-    else if (*m_device_identifier != raw_cmd.deviceIdentifier) {
+    else if (m_device_identifier.value() != raw_cmd.deviceIdentifier) {
         LOG_ERROR_S << "Detected that a different device was connected. That is not "
                     << "supported. Got " << raw_cmd.deviceIdentifier << " but had "
-                    << *m_device_identifier;
+                    << m_device_identifier.value();
         exception(ID_MISMATCH);
         return;
     }

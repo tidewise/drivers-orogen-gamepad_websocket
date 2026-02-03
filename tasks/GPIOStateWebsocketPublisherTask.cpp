@@ -10,6 +10,7 @@ using namespace base;
 using namespace controldev;
 using namespace gamepad_websocket;
 using namespace linux_gpios;
+using namespace std;
 
 GPIOStateWebsocketPublisherTask::GPIOStateWebsocketPublisherTask(std::string const& name)
     : GPIOStateWebsocketPublisherTaskBase(name)
@@ -82,25 +83,24 @@ void GPIOStateWebsocketPublisherTask::cleanupHook()
 void GPIOStateWebsocketPublisherTask::updateOutgoingRawCommand(
     GPIOState const& gpio_state)
 {
-    if (!m_outgoing_raw_command.has_value()) {
-        m_outgoing_raw_command = RawCommand();
-    }
-
     auto const& state_size = gpio_state.states.size();
-    auto const& last_button_count = m_outgoing_raw_command->buttonValue.size();
-    if (last_button_count == 0) {
-        m_outgoing_raw_command->buttonValue.resize(state_size);
-    }
-    else if (last_button_count != state_size) {
-        LOG_ERROR_S << "Expected a GPIOState with " << last_button_count
-                    << " elements, but got one with " << state_size << " elements";
-        exception(SIZE_MISMATCH);
-        return;
+    if (m_outgoing_raw_command.has_value()) {
+        auto last_gpio_state_size = m_outgoing_raw_command.value().buttonValue.size();
+        if (last_gpio_state_size != 0 && last_gpio_state_size != state_size) {
+            LOG_ERROR_S << "Expected a GPIOState with " << last_gpio_state_size
+                        << " elements, but got one with " << state_size << " elements";
+            exception(SIZE_MISMATCH);
+            return;
+        }
     }
 
-    m_outgoing_raw_command->time = Time::now();
-    for (size_t i = 0; i < gpio_state.states.size(); i++) {
-        auto const& state = gpio_state.states[i];
-        m_outgoing_raw_command->buttonValue[i] = state.data;
+    RawCommand new_raw_command;
+    new_raw_command.buttonValue.resize(state_size);
+    new_raw_command.time = Time::now();
+    for (size_t i = 0; i < state_size; i++) {
+        new_raw_command.buttonValue[i] = gpio_state.states[i].data;
     }
+
+    lock_guard<mutex> lock(m_shared_data_lock);
+    m_outgoing_raw_command = new_raw_command;
 }

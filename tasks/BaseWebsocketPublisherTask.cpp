@@ -7,6 +7,7 @@
 #include "gamepad_websocketTypes.hpp"
 
 #include <memory>
+#include <mutex>
 #include <seasocks/PrintfLogger.h>
 #include <seasocks/Server.h>
 
@@ -120,13 +121,15 @@ void BaseWebsocketPublisherTask::publishRawCommand()
     m_server->execute(m_publisher);
 }
 
-optional<controldev::RawCommand> const& BaseWebsocketPublisherTask::outgoingRawCommand()
+optional<controldev::RawCommand> BaseWebsocketPublisherTask::outgoingRawCommand()
 {
+    lock_guard<mutex> lock(m_shared_data_lock);
     return m_outgoing_raw_command;
 }
 
-optional<string> const& BaseWebsocketPublisherTask::deviceIdentifier()
+optional<string> BaseWebsocketPublisherTask::deviceIdentifier()
 {
+    lock_guard<mutex> lock(m_shared_data_lock);
     return m_device_identifier;
 }
 

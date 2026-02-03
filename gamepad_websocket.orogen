@@ -25,6 +25,10 @@ task_context "BaseWebsocketPublisherTask" do
     # The endpoint pointing to the command websocket handler
     property "endpoint", "string", "/ws"
 
+    # Transform the device identifier using the given string. A %1 is replaced by
+    # the original device identifier.
+    property "device_identifier_transform", "/std/string", ""
+
     output_port "statistics", "gamepad_websocket/Statistics"
 
     periodic 0.1

@@ -14,7 +14,7 @@ using namespace gamepad_websocket;
 using namespace seasocks;
 using namespace std;
 
-static Json::Value axesToJson(std::vector<double> const& cmds)
+static Json::Value axesToJson(vector<double> const& cmds)
 {
     Json::Value array_msg = Json::arrayValue;
     for (auto cmd : cmds) {
@@ -23,7 +23,7 @@ static Json::Value axesToJson(std::vector<double> const& cmds)
     return array_msg;
 }
 
-static Json::Value buttonsToJson(std::vector<uint8_t> const& button_cmds)
+static Json::Value buttonsToJson(vector<uint8_t> const& button_cmds)
 {
     Json::Value buttons = Json::arrayValue;
     for (auto btn : button_cmds) {
@@ -43,8 +43,10 @@ static Json::Value rawCommandToJson(controldev::RawCommand const& raw_cmd)
     return out_msg;
 }
 
-WebsocketHandler::WebsocketHandler(BaseWebsocketPublisherTask* task)
+WebsocketHandler::WebsocketHandler(BaseWebsocketPublisherTask* task,
+    string device_id_transform)
     : m_task(task)
+    , m_device_id_transform(device_id_transform)
 {
     if (task == nullptr) {
         throw invalid_argument("WebsocketHandler task cannot be a nullptr");
@@ -62,6 +64,7 @@ void WebsocketHandler::onConnect(WebSocket* socket)
         socket->send(writer.write(response));
         return;
     }
+    device_identifier = transformDeviceId(*device_identifier);
 
     Client new_socket;
     new_socket.connection = socket;
@@ -123,4 +126,20 @@ optional<size_t> WebsocketHandler::findSocketIndexFromConnection(WebSocket* sock
         }
     }
     return {};
+}
+
+string WebsocketHandler::transformDeviceId(string device_identifier) const
+{
+    if (m_device_id_transform.empty()) {
+        return device_identifier;
+    }
+
+    size_t pos = 0;
+    string result = m_device_id_transform;
+    while ((pos = m_device_id_transform.find("%1", pos)) != string::npos) {
+        result.replace(pos, 2, device_identifier);
+        // Deal with offchance the device has %1 in their name
+        pos += result.length();
+    }
+    return result;
 }

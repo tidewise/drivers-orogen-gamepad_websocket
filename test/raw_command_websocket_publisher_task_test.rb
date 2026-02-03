@@ -46,6 +46,13 @@ describe OroGen.gamepad_websocket.RawCommandWebsocketPublisherTask do
         websocket_create(identifier: nil)
     end
 
+    it "transform the device identifier using the provided transformation" do
+        task.properties.device_identifier_transform = "TideWise %1 Joystick"
+        syskit_configure_and_start(task)
+        write_device_identifier(identifier: "js")
+        websocket_create(identifier: "TideWise js Joystick")
+    end
+
     describe "connection diagnostics" do
         before do
             syskit_configure_and_start(task)

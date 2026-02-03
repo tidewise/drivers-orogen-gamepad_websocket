@@ -21,9 +21,11 @@ namespace gamepad_websocket {
 
         std::optional<size_t> findSocketIndexFromConnection(
             seasocks::WebSocket* socket) const;
+        std::string transformDeviceId(std::string const& device_identifier) const;
 
     public:
-        WebsocketHandler(BaseWebsocketPublisherTask* task = nullptr);
+        WebsocketHandler(BaseWebsocketPublisherTask* task = nullptr,
+            std::string device_id_transform = "");
 
         /**
          * @brief Publishes the outgoing RawCommand stored in the task to all
@@ -36,6 +38,8 @@ namespace gamepad_websocket {
 
         /* Pointer to the base task for information shared with *this. */
         BaseWebsocketPublisherTask* m_task = nullptr;
+
+        std::string m_device_id_transform = "";
     };
 }
 

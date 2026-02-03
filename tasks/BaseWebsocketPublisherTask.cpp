@@ -6,7 +6,6 @@
 #include "controldev/RawCommand.hpp"
 #include "gamepad_websocketTypes.hpp"
 
-#include <condition_variable>
 #include <memory>
 #include <seasocks/PrintfLogger.h>
 #include <seasocks/Server.h>
@@ -44,6 +43,8 @@ bool BaseWebsocketPublisherTask::configureHook()
     if (!BaseWebsocketPublisherTaskBase::configureHook())
         return false;
 
+
+    m_device_id_transform = _device_identifier_transform.get();
     return true;
 }
 
@@ -56,7 +57,7 @@ bool BaseWebsocketPublisherTask::startHook()
     auto logger = make_shared<PrintfLogger>(Logger::Level::Debug);
     m_server = make_unique<Server>(logger);
 
-    auto handler = make_shared<WebsocketHandler>(this);
+    auto handler = make_shared<WebsocketHandler>(this, m_device_id_transform);
     this->m_publisher = make_shared<CommandPublisher>(handler);
 
     string endpoint = _endpoint.get();

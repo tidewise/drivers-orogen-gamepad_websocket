@@ -147,11 +147,10 @@ void WebsocketHandler::publishData()
     Json::FastWriter fast;
     auto raw_cmd = outgoing_raw_command.value();
     auto msg = rawCommandToJson(raw_cmd);
-    for (size_t i = 0; i < m_active_sockets.size(); i++) {
-        auto socket = &m_active_sockets[i];
-        socket->connection->send(fast.write(msg));
-        socket->statistics.sent++;
-        socket->statistics.last_sent_message = Time::now();
+    for (auto& socket : m_active_sockets) {
+        socket.connection->send(fast.write(msg));
+        socket.statistics.sent++;
+        socket.statistics.last_sent_message = Time::now();
     }
     m_task->outputStatistics(m_active_sockets);
 }

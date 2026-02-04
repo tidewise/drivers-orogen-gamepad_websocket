@@ -30,8 +30,7 @@ namespace gamepad_websocket {
         friend class RawCommandWebsocketPublisherTaskBase;
 
     protected:
-        base::Time m_command_timeout;
-        base::Time m_command_deadline;
+        
 
     public:
         /** TaskContext constructor for RawCommandWebsocketPublisherTask

@@ -54,7 +54,7 @@ describe OroGen.gamepad_websocket.RawCommandWebsocketPublisherTask do
     end
 
     it "fails configure when the device id transform has more than a single wildcard" do
-        task.properties.device_identifier_transform = "TideWise %1 %1 Joystick"
+        task.properties.device_identifier_transform = "TideWise %1%1 Joystick"
         expect_execution.scheduler(true).to { fail_to_start task }
     end
 

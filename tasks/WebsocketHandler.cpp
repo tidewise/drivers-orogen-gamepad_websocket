@@ -5,6 +5,7 @@
 #include "base-logging/Logging.hpp"
 #include "controldev/RawCommand.hpp"
 
+#include <algorithm>
 #include <jsoncpp/json/value.h>
 #include <jsoncpp/json/writer.h>
 #include <seasocks/WebSocket.h>
@@ -55,51 +56,88 @@ WebsocketHandler::WebsocketHandler(BaseWebsocketPublisherTask* task,
 
 void WebsocketHandler::onConnect(WebSocket* socket)
 {
-    Json::FastWriter writer;
-    Json::Value response;
-    response["id"] = Json::Value::null;
-
     auto device_identifier = m_task->deviceIdentifier();
     if (!device_identifier.has_value()) {
-        socket->send(writer.write(response));
+        Client client;
+        client.connection = socket;
+        m_pending_sockets.push_back(client);
         return;
     }
     device_identifier = transformDeviceId(device_identifier.value());
 
-    Client new_socket;
-    new_socket.connection = socket;
-    m_active_sockets.push_back(new_socket);
-    m_task->outputStatistics(m_active_sockets);
+    Json::FastWriter writer;
+    Json::Value response;
     response["id"] = device_identifier.value();
     socket->send(writer.write(response));
+
+    Client new_socket;
+    new_socket.connection = socket;
+
+    m_active_sockets.push_back(new_socket);
+    m_task->outputStatistics(m_active_sockets);
 }
 
 void WebsocketHandler::onData(WebSocket* socket, const char* data)
 {
-    auto socket_idx = findSocketIndexFromConnection(socket);
-    if (!socket_idx.has_value()) {
+    auto active_client = clientFromListBySocket(m_active_sockets, socket);
+    if (!active_client.has_value()) {
         LOG_ERROR_S << "Got data from a connection that is not active!";
         return;
     }
-    auto& active_socket = m_active_sockets[*socket_idx];
-    active_socket.statistics.received++;
-    active_socket.statistics.last_received_message = Time::now();
+
+    (*active_client)->statistics.received++;
+    (*active_client)->statistics.last_received_message = Time::now();
     m_task->outputStatistics(m_active_sockets);
 }
 
 void WebsocketHandler::onDisconnect(WebSocket* socket)
 {
-    auto socket_idx = findSocketIndexFromConnection(socket);
-    if (!socket_idx.has_value()) {
-        LOG_ERROR_S << "Trying to disconnect a socket that is not active!";
+    auto client = clientFromListBySocket(m_active_sockets, socket);
+    if (client.has_value()) {
+        m_active_sockets.erase(client.value());
+        m_task->outputStatistics(m_active_sockets);
         return;
     }
-    m_active_sockets.erase(m_active_sockets.begin() + *socket_idx);
+    client = clientFromListBySocket(m_pending_sockets, socket);
+    if (client.has_value()) {
+        m_pending_sockets.erase(client.value());
+        m_task->outputStatistics(m_active_sockets);
+        return;
+    }
+
+    LOG_ERROR_S << "Trying to disconnect a socket that is not active or pending!";
+}
+
+void WebsocketHandler::processPendingPeers()
+{
+    if (m_pending_sockets.empty()) {
+        return;
+    }
+
+    auto device_identifier = m_task->deviceIdentifier();
+    if (!device_identifier.has_value()) {
+        return;
+    }
+    device_identifier = transformDeviceId(device_identifier.value());
+
+    Json::FastWriter writer;
+    Json::Value response;
+    response["id"] = device_identifier.value();
+    auto json_pkt = writer.write(response);
+
+    while (!m_pending_sockets.empty()) {
+        auto& client = m_pending_sockets.back();
+        client.connection->send(json_pkt);
+
+        m_active_sockets.push_back(client);
+        m_pending_sockets.pop_back();
+    }
     m_task->outputStatistics(m_active_sockets);
 }
 
 void WebsocketHandler::publishData()
 {
+    processPendingPeers();
     auto outgoing_raw_command = m_task->outgoingRawCommand();
     if (m_task && !outgoing_raw_command.has_value()) {
         LOG_WARN_S << "Task has no raw command to publish";
@@ -118,15 +156,17 @@ void WebsocketHandler::publishData()
     m_task->outputStatistics(m_active_sockets);
 }
 
-optional<size_t> WebsocketHandler::findSocketIndexFromConnection(WebSocket* socket) const
+optional<vector<Client>::iterator> WebsocketHandler::clientFromListBySocket(
+    vector<Client>& clients_list,
+    seasocks::WebSocket* const socket)
 {
-    for (size_t i = 0; i < m_active_sockets.size(); i++) {
-        auto s = m_active_sockets[i].connection;
-        if (s == socket) {
-            return i;
-        }
+    auto client_itt = find_if(clients_list.begin(),
+        clients_list.end(),
+        [socket](Client const& client) { return client.connection == socket; });
+    if (client_itt == clients_list.end()) {
+        return {};
     }
-    return {};
+    return client_itt;
 }
 
 string WebsocketHandler::transformDeviceId(string const& device_identifier) const

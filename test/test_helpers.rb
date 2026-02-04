@@ -44,20 +44,28 @@ def websocket_create(wait: true, identifier: "js", timeout: 3)
         end
         flunk("timed out waiting for the websocket to connect")
     end
+
+    @websocket_created << s
+    # No need to wait for the id in the scenario where no id is expected
+    return s unless identifier
+
+    wait_for_device_id(s, identifier: identifier, timeout: timeout)
+end
+
+def wait_for_device_id(state, identifier: "js", timeout: 3)
     # Connect can happen at the same time as the publish execution. This block waits
     # until a message with the id is received
     deadline = Time.now + timeout
-    while Time.now < deadline
-        unless s.received_messages.empty?
-            msg = JSON.parse(s.received_messages.shift)
-            break if msg.key? "id"
+    loop do
+        unless state.received_messages.empty?
+            msg = JSON.parse(state.received_messages.shift)
+            return state if msg["id"] == identifier
         end
         sleep 0.1
-    end
-    assert_equal({ "id" => identifier }, msg)
-    @websocket_created << s
 
-    s
+        break if Time.now > deadline
+    end
+    raise WebsocketMessageTimeout, "timed out waiting for device id #{identifier}"
 end
 
 def websocket_disconnect(state)

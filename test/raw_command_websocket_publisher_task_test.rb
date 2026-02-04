@@ -39,11 +39,31 @@ describe OroGen.gamepad_websocket.RawCommandWebsocketPublisherTask do
             .to { emit task.interrupt_event }
     end
 
-    it "reports no id when trying to connect when the server doesnt know its " \
-       "device identifier" do
+    it "queues connections and sends the ID when it becomes known" do
         syskit_configure_and_start(task)
-        # Assertion is done inside websocket_create
+        ws = websocket_create(identifier: nil)
+        assert ws.received_messages.empty?, ws.received_messages
+
+        # The server now knows the ID, and will send it to pending connections
+        write_device_identifier(identifier: "test_id")
+        expected = { "id" => "test_id" }
+        assert_websocket_receives_expected_message(ws, expected)
+
+        # Also verify that new connections get the ID immediately
         websocket_create(identifier: nil)
+        wait_for_device_id(ws, identifier: "test_id")
+    end
+
+    it "queues connections and sends the transformed ID when it becomes known" do
+        task.properties.device_identifier_transform = "TideWise %1 Joystick"
+        syskit_configure_and_start(task)
+        ws = websocket_create(identifier: nil)
+        assert ws.received_messages.empty?, ws.received_messages
+
+        # The server now knows the ID, and will send it to pending connections
+        write_device_identifier(identifier: "js")
+        expected = { "id" => "TideWise js Joystick" }
+        assert_websocket_receives_expected_message(ws, expected)
     end
 
     it "transform the device identifier using the provided transformation" do

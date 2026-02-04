@@ -119,7 +119,7 @@ describe OroGen.gamepad_websocket.GPIOStateWebsocketPublisherTask do
             end
 
             msg = assert_websocket_receives_message(@ws)
-            msg.delete("time")
+            msg.delete("timestamp")
             assert_equal({ "axes" => [],
                            "buttons" => [{ "pressed" => true },
                                          { "pressed" => false },
@@ -140,7 +140,7 @@ describe OroGen.gamepad_websocket.GPIOStateWebsocketPublisherTask do
 
             [@ws, ws2].each do |ws_state|
                 msg = assert_websocket_receives_message(ws_state)
-                msg.delete("time")
+                msg.delete("timestamp")
                 assert_equal({ "axes" => [],
                                "buttons" => [{ "pressed" => true },
                                              { "pressed" => false },

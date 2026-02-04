@@ -46,6 +46,18 @@ describe OroGen.gamepad_websocket.RawCommandWebsocketPublisherTask do
         websocket_create(identifier: nil)
     end
 
+    it "transform the device identifier using the provided transformation" do
+        task.properties.device_identifier_transform = "TideWise %1 Joystick"
+        syskit_configure_and_start(task)
+        write_device_identifier(identifier: "js")
+        websocket_create(identifier: "TideWise js Joystick")
+    end
+
+    it "fails configure when the device id transform has more than a single wildcard" do
+        task.properties.device_identifier_transform = "TideWise %1 %1 Joystick"
+        expect_execution.scheduler(true).to { fail_to_start task }
+    end
+
     describe "connection diagnostics" do
         before do
             syskit_configure_and_start(task)
@@ -135,7 +147,7 @@ describe OroGen.gamepad_websocket.RawCommandWebsocketPublisherTask do
             end
 
             msg = assert_websocket_receives_message(@ws)
-            msg.delete("time")
+            msg.delete("timestamp")
             assert_equal({ "axes" => [0.5, 1],
                            "buttons" => [{ "pressed" => true }, { "pressed" => false }] },
                          msg)
@@ -155,7 +167,7 @@ describe OroGen.gamepad_websocket.RawCommandWebsocketPublisherTask do
 
             [@ws, ws2].each do |ws_state|
                 msg = assert_websocket_receives_message(ws_state)
-                msg.delete("time")
+                msg.delete("timestamp")
                 assert_equal(
                     { "axes" => [0.5, 1],
                       "buttons" => [{ "pressed" => true }, { "pressed" => false }] },

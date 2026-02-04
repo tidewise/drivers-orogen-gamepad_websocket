@@ -58,12 +58,15 @@ namespace gamepad_websocket {
         std::shared_ptr<CommandPublisher> m_publisher;
         std::optional<std::string> m_device_identifier;
         std::optional<controldev::RawCommand> m_outgoing_raw_command;
+        std::string m_device_id_transform = "";
 
         /*
          * Requests that the server thread executes the current CommandPublisher
          * in the next cycle.
          */
         void publishRawCommand();
+
+        bool validateDeviceIdTransform(std::string const& transform_str);
 
     public:
         /*

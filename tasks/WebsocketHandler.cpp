@@ -14,7 +14,7 @@ using namespace gamepad_websocket;
 using namespace seasocks;
 using namespace std;
 
-static Json::Value axesToJson(std::vector<double> const& cmds)
+static Json::Value axesToJson(vector<double> const& cmds)
 {
     Json::Value array_msg = Json::arrayValue;
     for (auto cmd : cmds) {
@@ -23,7 +23,7 @@ static Json::Value axesToJson(std::vector<double> const& cmds)
     return array_msg;
 }
 
-static Json::Value buttonsToJson(std::vector<uint8_t> const& button_cmds)
+static Json::Value buttonsToJson(vector<uint8_t> const& button_cmds)
 {
     Json::Value buttons = Json::arrayValue;
     for (auto btn : button_cmds) {
@@ -37,14 +37,16 @@ static Json::Value buttonsToJson(std::vector<uint8_t> const& button_cmds)
 static Json::Value rawCommandToJson(controldev::RawCommand const& raw_cmd)
 {
     Json::Value out_msg;
-    out_msg["time"] = static_cast<Json::UInt64>(raw_cmd.time.toMilliseconds());
+    out_msg["timestamp"] = static_cast<Json::UInt64>(raw_cmd.time.toMilliseconds());
     out_msg["axes"] = axesToJson(raw_cmd.axisValue);
     out_msg["buttons"] = buttonsToJson(raw_cmd.buttonValue);
     return out_msg;
 }
 
-WebsocketHandler::WebsocketHandler(BaseWebsocketPublisherTask* task)
+WebsocketHandler::WebsocketHandler(BaseWebsocketPublisherTask* task,
+    string const& device_id_transform)
     : m_task(task)
+    , m_device_id_transform(device_id_transform)
 {
     if (task == nullptr) {
         throw invalid_argument("WebsocketHandler task cannot be a nullptr");
@@ -62,6 +64,7 @@ void WebsocketHandler::onConnect(WebSocket* socket)
         socket->send(writer.write(response));
         return;
     }
+    device_identifier = transformDeviceId(*device_identifier);
 
     Client new_socket;
     new_socket.connection = socket;
@@ -97,13 +100,14 @@ void WebsocketHandler::onDisconnect(WebSocket* socket)
 
 void WebsocketHandler::publishData()
 {
-    if (m_task && !m_task->outgoingRawCommand().has_value()) {
+    auto outgoing_raw_command = m_task->outgoingRawCommand();
+    if (m_task && !outgoing_raw_command.has_value()) {
         LOG_WARN_S << "Task has no raw command to publish";
         return;
     }
 
     Json::FastWriter fast;
-    auto raw_cmd = *m_task->outgoingRawCommand();
+    auto raw_cmd = *outgoing_raw_command;
     auto msg = rawCommandToJson(raw_cmd);
     for (size_t i = 0; i < m_active_sockets.size(); i++) {
         auto socket = &m_active_sockets[i];
@@ -123,4 +127,18 @@ optional<size_t> WebsocketHandler::findSocketIndexFromConnection(WebSocket* sock
         }
     }
     return {};
+}
+
+string WebsocketHandler::transformDeviceId(string const& device_identifier) const
+{
+    if (m_device_id_transform.empty()) {
+        return device_identifier;
+    }
+
+    size_t pos = 0;
+    string result = m_device_id_transform;
+    if ((pos = m_device_id_transform.find("%1", pos)) != string::npos) {
+        result.replace(pos, 2, device_identifier);
+    }
+    return result;
 }

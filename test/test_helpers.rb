@@ -48,10 +48,11 @@ def websocket_create(wait: true, identifier: "js", timeout: 3)
     while Time.now < deadline
         unless s.received_messages.empty?
             msg = JSON.parse(s.received_messages.shift)
-            break if msg["id"] == identifier
+            break if msg.key? "id"
         end
         sleep 0.1
     end
+    assert_equal({ "id" => identifier }, msg)
     @websocket_created << s
 
     s

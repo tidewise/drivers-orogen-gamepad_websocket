@@ -20,7 +20,6 @@ describe OroGen.gamepad_websocket.GPIOStateWebsocketPublisherTask do
         @port = allocate_interface_port
         task.properties.port = @port
         task.properties.endpoint = "/ws"
-        task.properties.gpio_state_timeout = Time.at(1)
         task.properties.device_identifier = "js"
 
         @url = "ws://127.0.0.1:#{@port}/ws"
@@ -77,21 +76,6 @@ describe OroGen.gamepad_websocket.GPIOStateWebsocketPublisherTask do
             end
         end
 
-        it "stops publishing if no new gpio state sample arrives for gpio state " \
-           "timeout time" do
-            expect_execution do
-                syskit_write task.gpio_state_port, gpio_state([true, false])
-            end.to { have_one_new_sample(task.statistics_port) }
-            expect_execution.to { emit(task.input_timeout_event) }
-            # Clear the list of received messages after input timeout to test that no
-            # new messages arrive
-            @ws.received_messages.clear
-
-            assert_raises(WebsocketMessageTimeout) do
-                assert_websocket_receives_message(@ws, timeout: 0.5)
-            end
-        end
-
         it "goes into size mismatch if the number of states changes from a sample to " \
            "another" do
             expect_execution do
@@ -100,17 +84,6 @@ describe OroGen.gamepad_websocket.GPIOStateWebsocketPublisherTask do
             expect_execution do
                 syskit_write task.gpio_state_port, gpio_state([true, false, true])
             end.to { emit task.size_mismatch_event }
-        end
-
-        it "resumes publishing if a new gpio state sample arrives when the task is in " \
-           "a input timeout state" do
-            expect_execution.to { emit(task.input_timeout_event) }
-
-            expect_execution do
-                syskit_write task.gpio_state_port, gpio_state([true, false])
-            end.to { have_one_new_sample(task.statistics_port) }
-
-            assert_websocket_receives_message(@ws)
         end
 
         it "publishes the raw command message in a JSON format" do

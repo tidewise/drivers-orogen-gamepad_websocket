@@ -26,16 +26,12 @@ task_context "BaseWebsocketPublisherTask" do
     property "endpoint", "string", "/ws"
 
     output_port "statistics", "gamepad_websocket/Statistics"
-
-    periodic 0.1
+    port_driven timeout: 1
 end
 
 # Takes raw command and publishes it via a websocket
 task_context "RawCommandWebsocketPublisherTask",
              subclasses: "BaseWebsocketPublisherTask" do
-    # How much time since the last raw_command sample before the commands are no longer
-    # published to the websocket
-    property "command_timeout", "base/Time"
 
     # Transform the device identifier using the given string. A %1 is replaced by
     # the original device identifier.
@@ -45,7 +41,7 @@ task_context "RawCommandWebsocketPublisherTask",
     # property for this task
     input_port "raw_command", "controldev/RawCommand"
 
-    runtime_states :INPUT_TIMEOUT, :PUBLISHING
+    runtime_states :PUBLISHING
 
     # ID_MISTMATCH: emitted when the deviceIdentifier changes throghout the execution
     exception_states :ID_MISMATCH
@@ -54,20 +50,16 @@ end
 # Takes a GPIOState and converts it to RawCommand before publishing it via a websocket
 task_context "GPIOStateWebsocketPublisherTask",
              subclasses: "BaseWebsocketPublisherTask" do
-    # How much time since the last gpio_state sample before the commands are no longer
-    # published to the websocket
-    property "gpio_state_timeout", "base/Time"
-
     # Used by the websocket peer to identify which kind of gamepad is connected. This
     # is sent as a response during connection.
-    property "device_identifier",  "string"
+    property "device_identifier", "string"
 
     # The GPIOState which is converted to RawCommand before being published.
     #
     # All GPIOStates are sent as button presses to the websocket.
     input_port "gpio_state", "linux_gpios/GPIOState"
 
-    runtime_states :INPUT_TIMEOUT, :PUBLISHING
+    runtime_states :PUBLISHING
 
     exception_states :SIZE_MISMATCH
 end

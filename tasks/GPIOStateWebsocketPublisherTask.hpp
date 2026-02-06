@@ -107,9 +107,10 @@ namespace gamepad_websocket {
         void cleanupHook();
 
     private:
-        base::Time m_gpio_state_timeout;
-        base::Time m_gpio_state_deadline;
-
+        /**
+         * Transforms the given gpio state into a raw command and update the outgoing raw
+         * command.
+         */
         void updateOutgoingRawCommand(linux_gpios::GPIOState const& gpio_state);
     };
 }

@@ -9,6 +9,7 @@
 
 #include <future>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <seasocks/Server.h>
 
@@ -60,6 +61,8 @@ namespace gamepad_websocket {
         std::optional<controldev::RawCommand> m_outgoing_raw_command;
         std::string m_device_id_transform = "";
 
+        std::mutex m_shared_data_lock;
+
         /*
          * Requests that the server thread executes the current CommandPublisher
          * in the next cycle.
@@ -73,9 +76,9 @@ namespace gamepad_websocket {
          * Returns the latest outgoing raw command to be published to all the
          * clients, if there is one.
          */
-        std::optional<controldev::RawCommand> const& outgoingRawCommand();
+        std::optional<controldev::RawCommand> outgoingRawCommand();
 
-        std::optional<std::string> const& deviceIdentifier();
+        std::optional<std::string> deviceIdentifier();
         /*
          * Take a list of the active clients statistics and write it in the
          * statistics port. This is called in the server thread by the

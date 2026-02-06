@@ -83,11 +83,13 @@ describe OroGen.gamepad_websocket.GPIOStateWebsocketPublisherTask do
                 syskit_write task.gpio_state_port, gpio_state([true, false])
             end.to { have_one_new_sample(task.statistics_port) }
             expect_execution.to { emit(task.input_timeout_event) }
-            messages_after_timeout = @ws.received_messages
+            # Clear the list of received messages after input timeout to test that no
+            # new messages arrive
+            @ws.received_messages.clear
 
-            # Sleep half a second to give a chance for the server to publish messages
-            sleep(0.5)
-            assert_equal @ws.received_messages, messages_after_timeout
+            assert_raises(WebsocketMessageTimeout) do
+                assert_websocket_receives_message(@ws, timeout: 0.5)
+            end
         end
 
         it "goes into size mismatch if the number of states changes from a sample to " \
@@ -118,33 +120,28 @@ describe OroGen.gamepad_websocket.GPIOStateWebsocketPublisherTask do
                 have_one_new_sample(task.statistics_port)
             end
 
-            msg = assert_websocket_receives_message(@ws)
-            msg.delete("timestamp")
-            assert_equal({ "axes" => [],
-                           "buttons" => [{ "pressed" => true },
-                                         { "pressed" => false },
-                                         { "pressed" => true }] }, msg)
+            expected = { "axes" => [],
+                         "buttons" => [{ "pressed" => true },
+                                       { "pressed" => false },
+                                       { "pressed" => true }] }
+            assert_websocket_receives_expected_message(@ws, expected)
         end
 
         it "publishes the raw command message in a JSON format to all connected " \
            "clients" do
             ws2 = websocket_create
-            # # Remove the onConnect ID message from the list
-            # assert_websocket_receives_message(ws2)
-
             expect_execution do
                 syskit_write task.gpio_state_port, gpio_state([true, false, true])
             end.to do
                 have_one_new_sample(task.statistics_port)
             end
 
+            expected = { "axes" => [],
+                         "buttons" => [{ "pressed" => true },
+                                       { "pressed" => false },
+                                       { "pressed" => true }] }
             [@ws, ws2].each do |ws_state|
-                msg = assert_websocket_receives_message(ws_state)
-                msg.delete("timestamp")
-                assert_equal({ "axes" => [],
-                               "buttons" => [{ "pressed" => true },
-                                             { "pressed" => false },
-                                             { "pressed" => true }] }, msg)
+                assert_websocket_receives_expected_message(ws_state, expected)
             end
         end
     end

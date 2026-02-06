@@ -14,14 +14,18 @@ namespace gamepad_websocket {
      */
     class WebsocketHandler : public seasocks::WebSocket::Handler {
         std::vector<Client> m_active_sockets;
+        std::vector<Client> m_pending_sockets;
 
         void onConnect(seasocks::WebSocket* socket) override;
         void onData(seasocks::WebSocket* socket, const char* data) override;
         void onDisconnect(seasocks::WebSocket* socket) override;
 
-        std::optional<size_t> findSocketIndexFromConnection(
-            seasocks::WebSocket* socket) const;
+        void processPendingPeers();
         std::string transformDeviceId(std::string const& device_identifier) const;
+
+        std::optional<std::vector<Client>::iterator> clientFromListBySocket(
+            std::vector<Client>& clients_list,
+            seasocks::WebSocket* const socket);
 
     public:
         WebsocketHandler(BaseWebsocketPublisherTask* task = nullptr,

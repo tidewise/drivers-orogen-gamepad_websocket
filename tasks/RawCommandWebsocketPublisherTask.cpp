@@ -2,7 +2,6 @@
 
 #include "RawCommandWebsocketPublisherTask.hpp"
 #include "base-logging/Logging.hpp"
-#include "base-logging/logging/logging_iostream_style.h"
 #include "controldev/RawCommand.hpp"
 #include "gamepad_websocket/RawCommandWebsocketPublisherTaskBase.hpp"
 #include "rtt/FlowStatus.hpp"
@@ -29,6 +28,13 @@ bool RawCommandWebsocketPublisherTask::configureHook()
         return false;
 
     m_command_timeout = _command_timeout.get();
+
+    auto device_id_transform_str = _device_identifier_transform.get();
+    if (!validateDeviceIdTransform(device_id_transform_str)) {
+        return false;
+    }
+    m_device_id_transform = device_id_transform_str;
+
     return true;
 }
 

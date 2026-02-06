@@ -44,12 +44,7 @@ bool BaseWebsocketPublisherTask::configureHook()
     if (!BaseWebsocketPublisherTaskBase::configureHook())
         return false;
 
-    auto device_id_transform_str = _device_identifier_transform.get();
-    if (!validateDeviceIdTransform(device_id_transform_str)) {
-        return false;
-    }
-
-    m_device_id_transform = device_id_transform_str;
+    m_device_id_transform = "";
     return true;
 }
 
@@ -142,7 +137,7 @@ bool BaseWebsocketPublisherTask::validateDeviceIdTransform(string const& transfo
         return true;
     }
 
-    auto second_pos = transform_str.find(token, first_pos + 1);
+    auto second_pos = transform_str.find(token, first_pos + token.length());
     // A single %1 token is a valid transform string
     if (second_pos == string::npos) {
         return true;

@@ -20,7 +20,6 @@ describe OroGen.gamepad_websocket.RawCommandWebsocketPublisherTask do
         @port = allocate_interface_port
         task.properties.port = @port
         task.properties.endpoint = "/ws"
-        task.properties.command_timeout = Time.at(1)
 
         @url = "ws://127.0.0.1:#{@port}/ws"
         @websocket_created = []
@@ -95,30 +94,38 @@ describe OroGen.gamepad_websocket.RawCommandWebsocketPublisherTask do
         end
 
         it "changes the statistics whenever a raw command is published" do
-            before = expect_execution.to { have_one_new_sample(task.statistics_port) }
-            before = before.sockets_statistics.first
+            before = expect_execution do
+                syskit_write task.raw_command_port, raw_command([0.5, 1], [1, 0])
+            end.to { have_one_new_sample(task.statistics_port) }
+            assert_equal 1, before.sockets_statistics.size
 
             actual = expect_execution do
                 syskit_write task.raw_command_port, raw_command([0.5, 1], [1, 0])
             end.to { have_one_new_sample(task.statistics_port) }
             assert_equal 1, actual.sockets_statistics.size
 
-            stats = actual.sockets_statistics.first
-            assert_operator stats.sent, :>, before.sent
+            before_stats = before.sockets_statistics.first
+            actual_stats = actual.sockets_statistics.first
+            assert_operator actual_stats.sent, :>, before_stats.sent
         end
 
         it "changes the statistics specific for each socket whenever a raw command " \
            "is published" do
             websocket_create
 
-            before = expect_execution.to { have_one_new_sample(task.statistics_port) }
-            before = before.sockets_statistics
+            before = expect_execution do
+                syskit_write task.raw_command_port, raw_command([0.5, 1], [1, 0])
+            end.to { have_one_new_sample(task.statistics_port) }
+            assert_equal 2, before.sockets_statistics.size
+
             actual = expect_execution do
                 syskit_write task.raw_command_port, raw_command([0.5, 1], [1, 0])
             end.to { have_one_new_sample(task.statistics_port) }
             assert_equal 2, actual.sockets_statistics.size
 
-            actual.sockets_statistics.zip(before) do |stats, stats_before|
+            before_stats = before.sockets_statistics
+            actual_stats = actual.sockets_statistics
+            actual_stats.zip(before_stats) do |stats, stats_before|
                 assert_operator stats.sent, :>, stats_before.sent
             end
         end
@@ -131,34 +138,6 @@ describe OroGen.gamepad_websocket.RawCommandWebsocketPublisherTask do
             expect_execution do
                 syskit_write task.raw_command_port, new_raw_cmd
             end.to { emit(task.id_mismatch_event) }
-        end
-
-        it "stops publishing if no new raw command sample arrives for command timeout " \
-           "time" do
-            expect_execution do
-                syskit_write task.raw_command_port, raw_command([0.5, 1], [1, 0])
-            end.to { have_one_new_sample(task.statistics_port) }
-            expect_execution.to { emit(task.input_timeout_event) }
-            # Clear the list of received messages after input timeout to test that no
-            # new messages arrive
-            @ws.received_messages.clear
-
-            assert_raises(WebsocketMessageTimeout) do
-                assert_websocket_receives_message(@ws, timeout: 0.5)
-            end
-        end
-
-        it "resumes publishing if a new raw command sample arrives when the task is in " \
-           "a input timeout state" do
-            expect_execution.to { emit(task.input_timeout_event) }
-
-            expect_execution do
-                syskit_write task.raw_command_port, raw_command([0.5, 1], [1, 0])
-            end.to do
-                have_one_new_sample(task.statistics_port)
-            end
-
-            assert_websocket_receives_message(@ws)
         end
 
         it "publishes the raw command message in a JSON format" do

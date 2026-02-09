@@ -26,7 +26,6 @@ bool GPIOStateWebsocketPublisherTask::configureHook()
     if (!GPIOStateWebsocketPublisherTaskBase::configureHook())
         return false;
     m_device_identifier = _device_identifier.get();
-    m_gpio_state_timeout = _gpio_state_timeout.get();
     return true;
 }
 
@@ -34,7 +33,6 @@ bool GPIOStateWebsocketPublisherTask::startHook()
 {
     if (!GPIOStateWebsocketPublisherTaskBase::startHook())
         return false;
-    m_gpio_state_deadline = Time::now() + m_gpio_state_timeout;
     return true;
 }
 
@@ -43,25 +41,15 @@ void GPIOStateWebsocketPublisherTask::updateHook()
     GPIOStateWebsocketPublisherTaskBase::updateHook();
 
     GPIOState gpio_state;
-    auto flow_status = _gpio_state.read(gpio_state);
-    auto now = Time::now();
-    if (flow_status == RTT::NewData) {
-        m_gpio_state_deadline = now + m_gpio_state_timeout;
-        if (state() != PUBLISHING) {
-            state(PUBLISHING);
-        }
-        updateOutgoingRawCommand(gpio_state);
-    }
-    else if (now > m_gpio_state_deadline) {
-        if (state() != INPUT_TIMEOUT) {
-            state(INPUT_TIMEOUT);
-        }
-        return;
-    }
-    else if (flow_status == RTT::NoData) {
+    if (_gpio_state.read(gpio_state) != RTT::NewData) {
         return;
     }
 
+    updateOutgoingRawCommand(gpio_state);
+
+    if (state() != PUBLISHING) {
+        state(PUBLISHING);
+    }
     publishRawCommand();
 }
 
@@ -84,8 +72,9 @@ void GPIOStateWebsocketPublisherTask::updateOutgoingRawCommand(
     GPIOState const& gpio_state)
 {
     auto const& state_size = gpio_state.states.size();
-    if (m_outgoing_raw_command.has_value()) {
-        auto last_gpio_state_size = m_outgoing_raw_command.value().buttonValue.size();
+    auto previous_outgoing_raw_command = outgoingRawCommand();
+    if (previous_outgoing_raw_command.has_value()) {
+        auto last_gpio_state_size = previous_outgoing_raw_command.value().buttonValue.size();
         if (last_gpio_state_size != 0 && last_gpio_state_size != state_size) {
             LOG_ERROR_S << "Expected a GPIOState with " << last_gpio_state_size
                         << " elements, but got one with " << state_size << " elements";
@@ -98,7 +87,7 @@ void GPIOStateWebsocketPublisherTask::updateOutgoingRawCommand(
     new_raw_command.buttonValue.resize(state_size);
     new_raw_command.time = Time::now();
     for (size_t i = 0; i < state_size; i++) {
-        new_raw_command.buttonValue[i] = gpio_state.states[i].data;
+        new_raw_command.buttonValue.at(i) = gpio_state.states.at(i).data;
     }
 
     lock_guard<mutex> lock(m_shared_data_lock);

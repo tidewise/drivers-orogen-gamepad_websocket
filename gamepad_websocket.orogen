@@ -45,6 +45,8 @@ task_context "RawCommandWebsocketPublisherTask",
 
     # ID_MISTMATCH: emitted when the deviceIdentifier changes throghout the execution
     exception_states :ID_MISMATCH
+
+    port_driven timeout: 1
 end
 
 # Takes a GPIOState and converts it to RawCommand before publishing it via a websocket
@@ -62,4 +64,6 @@ task_context "GPIOStateWebsocketPublisherTask",
     runtime_states :PUBLISHING
 
     exception_states :SIZE_MISMATCH
+
+    port_driven timeout: 1
 end
